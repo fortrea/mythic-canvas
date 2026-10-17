@@ -1,12 +1,13 @@
 # Mythic Canvas
 
-Living worlds of mythic creatures, drawn entirely in code. Five self-contained HTML5 canvas pages: four cursor scenes and Dragon World, a whole realm to explore. No build step, no dependencies: open any `.html` file in a browser.
+Living worlds of mythic creatures, drawn entirely in code. Six self-contained pages: four cursor scenes and Dragon World in 2D and 3D. The 3D page loads Three.js from a CDN. No build step, no dependencies: open any `.html` file in a browser.
 
 | Page | Scene | Creatures |
 |---|---|---|
 | `bone-dragon.html` | Heavenly mountains: karst peaks with pagodas, floating temple islands, celestial gate, sea of clouds, aurora | Bone dragons that grow celestial skins and beards (original) |
 | `dragon-realistic.html` | Heavenly mountains (same scene) | Realistic, richly scaled dragons with painted heads; the mantle can be toggled on or off |
 | `dragon-world.html` | A wide side-view realm that grows more heavenly from left to right: Ashen Wilds, Ember Highlands, Gilded Spires, Celestial Terraces and Mount Olympus | Five castes (Common, Middle, High, Emperor and the one Dragon King), 28 elements with their own breath, nests, eggs, hatchlings and a full life cycle (drag to explore, scroll to zoom, click a dragon or nest) |
+| `dragon-world-3d.html` | The same realm as a low-poly 3D floating island (Three.js): orbit, zoom, follow a dragon | Castes, elements, nests, hatchlings and the Dragon King in 3D |
 | `mushroom-swarm.html` | Enchanted toxic forest: giant mushrooms, twisted trees, witch's hut, fog, fireflies | Poisonous mushroom creatures that ripen into toxic colors |
 | `celestial-maidens.html` | Hillside village and old town: castle, church, windmill, clock tower, street lamps | Winged celestial maidens in flowing gowns |
 
