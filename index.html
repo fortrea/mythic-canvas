@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cursor Swarms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+:root{--bg:#090b16;--fg:#ecebf3;--muted:#9a9cb3;--line:#24273d;--accent:#ffcf7a;
+  --display:"Cinzel",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(120% 80% at 50% 0%,#1a1d3a 0%,var(--bg) 60%);color:var(--fg);
+  font:15px/1.6 system-ui,sans-serif;padding:56px max(16px,env(safe-area-inset-left)) 56px max(16px,env(safe-area-inset-right))}
+main{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:32px}
+h1{margin:0;font:700 clamp(30px,6vw,52px)/1.05 var(--display);letter-spacing:.06em;text-wrap:balance}
+.lede{margin:0;color:var(--muted);max-width:60ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+a.card{display:flex;flex-direction:column;gap:6px;padding:20px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03);
+  color:inherit;text-decoration:none;transition:border-color .2s,transform .2s}
+a.card:hover,a.card:focus-visible{border-color:var(--accent);transform:translateY(-2px);outline:none}
+.card b{font:700 18px/1.2 var(--display);letter-spacing:.05em}
+.card span{color:var(--muted);font-size:14px}
+.card em{font:400 11px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-style:normal}
+img{max-width:100%;border-radius:10px;border:1px solid var(--line)}
+footer{font:400 12px/1.5 var(--mono);color:var(--muted)}
+@media (prefers-reduced-motion:reduce){a.card{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Cursor Swarms</h1>
+    <p class="lede">Three living canvas scenes. A swarm follows your cursor, rings around it, performs formations when you go idle, and lives through a full day–night cycle.</p>
+  </header>
+  <div class="grid">
+    <a class="card" href="bone-dragon.html"><em>Heavenly mountains</em><b>Bone Dragons</b><span>Skeleton dragons that grow celestial skins and long beards, then ascend into stars.</span></a>
+    <a class="card" href="mushroom-swarm.html"><em>Toxic forest</em><b>Toxic Mushrooms</b><span>Poisonous mushroom creatures that ripen, spit spores and reseed the forest floor.</span></a>
+    <a class="card" href="celestial-maidens.html"><em>Village &amp; old town</em><b>Celestial Maidens</b><span>Winged maidens in flowing gowns whose colors bloom as they circle you.</span></a>
+  </div>
+  <img src="assets/preview.png" alt="The three scenes at noon, sunset and night">
+  <footer>Move the cursor to lead the swarm · tap or click to trigger their move · stay still for formations</footer>
+</main>
+</body>
+</html>
