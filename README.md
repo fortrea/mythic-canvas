@@ -1,6 +1,6 @@
-# Cursor Swarms
+# Mythic Canvas
 
-Five self-contained HTML5 canvas scenes. No build step, no dependencies: open any `.html` file in a browser.
+Living worlds of mythic creatures, drawn entirely in code. Five self-contained HTML5 canvas pages: four cursor scenes and Dragon World, a whole realm to explore. No build step, no dependencies: open any `.html` file in a browser.
 
 | Page | Scene | Creatures |
 |---|---|---|
@@ -12,7 +12,7 @@ Five self-contained HTML5 canvas scenes. No build step, no dependencies: open an
 
 ![Preview](assets/preview.png)
 
-## Behaviour (all pages)
+## Cursor scenes (bone dragons, realistic dragons, mushrooms, maidens)
 
 - **Cursor rings**: heads spread evenly on rings around the cursor and always face it, leaving the centre clear.
 - **Tap / click**: the whole swarm lunges and fires particles at the cursor.
@@ -20,6 +20,13 @@ Five self-contained HTML5 canvas scenes. No build step, no dependencies: open an
 - **Life cycle**: newcomers fly in from the edges; skins / colours bloom over time; at the end of their lifespan they ascend and leave a star (or a glowing mushroom on the forest floor).
 - **Day–night cycle**: one full day every 160 s (sunrise, noon, golden hour, sunset, dusk, night) with moving sun and moon, clouds, birds, and windows and lanterns that light up at night. The current time is shown bottom-left.
 - Respects `prefers-reduced-motion`.
+
+## Dragon World
+
+- **Five castes from left to right**: Ashen Wilds (Common), Ember Highlands (Middle), Gilded Spires (High), Celestial Terraces (Emperor) and Mount Olympus, home of the one Dragon King. Dragons only live in their own realm or a lower one.
+- **28 elements** in tiers, each with its own breath: classic (fire, water, ice, lightning…), light and dark, and beyond (void, cosmic, time, gravity, chaos, dream). The King breathes Aether.
+- **Life cycle**: flying, landing, perching, brooding, sleeping at night, eggs, hatchlings that follow their parent, ageing, and ascension to the stars.
+- **Controls**: drag to explore, scroll or pinch to zoom, minimap and caste track to travel, click a dragon or nest for details, Roar and Breathe buttons.
 
 ## Run locally
 
