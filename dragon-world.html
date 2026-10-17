@@ -26,7 +26,7 @@ body{margin:0;background:#07070b;color:var(--ink);font:15px/1.45 var(--text);ove
 #census{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:560px}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font:400 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);backdrop-filter:blur(6px)}
 .chip i{width:8px;height:8px;border-radius:50%}.chip b{color:var(--ink);font-weight:400;font-variant-numeric:tabular-nums}
-#card{position:fixed;z-index:3;right:max(16px,env(safe-area-inset-right,0px));top:calc(84px + env(safe-area-inset-top,0px));width:min(320px,calc(100vw - 32px));
+#card{position:fixed;z-index:3;right:max(16px,env(safe-area-inset-right,0px));top:calc(132px + env(safe-area-inset-top,0px));max-height:calc(100vh - 230px);overflow:auto;width:min(320px,calc(100vw - 32px));
   background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;backdrop-filter:blur(10px);box-shadow:0 20px 50px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px}
 .card-head{display:flex;gap:12px;align-items:center}
 .card-head>div{flex:1;min-width:0}
@@ -36,6 +36,22 @@ body{margin:0;background:#07070b;color:var(--ink);font:15px/1.45 var(--text);ove
 .x{background:none;border:0;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:6px}
 .x:hover{color:var(--ink)}
 .status{margin:0;color:var(--gold);font-style:italic}
+.badges{margin:0;display:flex;gap:6px;flex-wrap:wrap}.badges span{font:400 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border:1px solid;border-radius:999px}
+.desc{margin:0;color:var(--ink);font-size:14px}
+#card.royal{border-color:rgba(255,226,150,.7);box-shadow:0 0 0 1px rgba(255,226,150,.25),0 0 60px rgba(255,214,130,.25),0 20px 50px rgba(0,0,0,.5);background:linear-gradient(160deg,rgba(60,48,24,.82),rgba(16,13,14,.82))}
+#card.royal h2{color:#fff1c4;text-shadow:0 0 14px rgba(255,214,130,.6)}
+#track{top:calc(70px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(760px,calc(100vw - 32px));display:grid;grid-template-columns:repeat(5,1fr);gap:4px;pointer-events:auto;position:fixed}
+#track button{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:6px 8px;border-radius:8px;background:var(--panel);border:1px solid var(--line);min-width:0;backdrop-filter:blur(6px)}
+#track button b{font:600 11px/1.1 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#track button span{font:400 10px/1.2 var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#track button.on{border-color:var(--c);box-shadow:0 0 14px color-mix(in srgb,var(--c) 40%,transparent)}
+#track button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#trackMark{position:absolute;bottom:-6px;width:10px;height:10px;margin-left:-5px;transform:rotate(45deg);background:var(--gold);border-radius:2px;transition:left .2s}
+#banner{position:fixed;z-index:2;left:50%;top:32%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:0;transition:opacity .8s;font:700 clamp(26px,5vw,56px)/1.05 var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--c,#efe6d2);text-shadow:0 0 30px rgba(0,0,0,.9),0 0 18px color-mix(in srgb,var(--c) 50%,transparent)}
+#banner small{display:block;font:400 12px/1.4 var(--mono);letter-spacing:.3em;color:var(--ink);opacity:.8}
+#banner.show{opacity:1}
+.chip.king i{background:radial-gradient(circle,#fff6d8,#e8c46a)}.chip.king{border-color:rgba(255,226,150,.5)}
+@media (max-width:760px){#track button span{display:none}#card{top:calc(150px + env(safe-area-inset-top,0px))}}
 .meter{height:5px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;flex:1}.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--ember))}
 dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}dt{color:var(--muted)}dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .egg{display:flex;align-items:center;gap:10px;font:400 12px/1 var(--mono);color:var(--muted)}
@@ -55,11 +71,13 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 </head>
 <body>
 
-<canvas id="world" aria-label="A living world of dragons: drakes, fire drakes, wyverns and sky serpents nesting on mountains, a volcano and ancient ruins"></canvas>
+<canvas id="world" aria-label="A living world of dragons that rises from the ashen wilds to the dragons' Olympus, ruled by the Dragon King"></canvas>
 <div class="hud top">
   <div class="brand"><h1>Dragon World</h1><p id="clock">Day 1</p></div>
   <div id="census"></div>
 </div>
+<nav class="hud" id="track" aria-label="The five realms, from common to the Dragon King"></nav>
+<div id="banner" aria-live="polite"></div>
 <aside id="card" hidden></aside>
 <div class="hud" id="ticker" aria-live="polite"></div>
 <div class="hud bottom">
@@ -73,7 +91,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 const cv=document.getElementById('world'),ctx=cv.getContext('2d');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let W=0,H=0,DPR=1;
-const WORLD_W=6000,WORLD_H=1000;                     // world units; ground sits around y 820-900
+const WORLD_W=7600,WORLD_H=1000;                     // world units; ground sits around y 820-900
 const TAU=Math.PI*2;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
 const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
@@ -99,7 +117,7 @@ function worldTransform(par=1){const s=camScale();ctx.setTransform(s*DPR,0,0,s*D
 function screenTransform(){ctx.setTransform(DPR,0,0,DPR,0,0)}
 function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;clampCam()}
 addEventListener('resize',resize);resize();
-cam.x=clamp(1300-viewW()/2,0,WORLD_W-viewW());
+cam.x=0;                                              // the journey starts at the far left, among the commoners
 
 // ---------- input: drag to pan, wheel / pinch to zoom, keys, click ----------
 const mouse={x:-1e4,y:-1e4,wx:-1e4,wy:-1e4,inside:false};
@@ -155,7 +173,13 @@ function skyAt(now){
   const a=KEYS[i],b=KEYS[i+1],f=(h-a[0])/(b[0]-a[0]),e=f*f*(3-2*f);
   SKY.hour=h;SKY.top=mix(a[1],b[1],e);SKY.hor=mix(a[2],b[2],e);SKY.light=lerp(a[3],b[3],e);SKY.stars=lerp(a[4],b[4],e);
   SKY.night=clamp((.55-SKY.light)/.42,0,1);
+  const hv=heavenAt(cam.x+viewW()/2);SKY.heaven=hv;
+  const hTop=mix([28,20,70],[104,146,232],SKY.light),hHor=mix([104,72,156],[255,228,176],SKY.light);
+  SKY.top=mix(SKY.top,hTop,hv*.72);SKY.hor=mix(SKY.hor,hHor,hv*.78);
+  SKY.light=lerp(SKY.light,Math.max(SKY.light,.32),hv*.6);SKY.night=clamp((.55-SKY.light)/.42,0,1);SKY.stars=lerp(SKY.stars,Math.min(1,SKY.stars*1.3+.05),hv);
 }
+const smooth01=t=>{t=clamp(t,0,1);return t*t*(3-2*t)};
+const heavenAt=x=>smooth01((x-1400)/(7000-1400));
 const skyStars=Array.from({length:240},()=>({x:R(),y:R()*.75,r:R()*1.2+.2,p:R()*7}));
 const memorialStars=[];                              // stars left by dragons that ascended
 const stormClouds=Array.from({length:14},()=>({x:R()*1.6,y:.04+R()*.4,s:.7+R()*1.3,v:(4+R()*8)*1e-6*(R()<.5?1:-1),
@@ -182,112 +206,136 @@ function drawSky(now){
     ctx.fillStyle=mg;ctx.fillRect(x-Rr,y-Rr,Rr*2,Rr*2);ctx.fillStyle='#e8eaf4';ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();
     ctx.fillStyle='rgba(140,150,180,.35)';for(const [dx,dy,rr] of [[-.3,-.2,.22],[.25,.3,.16],[.1,-.45,.1]]){ctx.beginPath();ctx.arc(x+dx*r,y+dy*r,rr*r,0,TAU);ctx.fill()}}
   // heavy storm clouds, lit by the horizon at dawn and dusk
-  const warm=1-Math.min(1,Math.abs(SKY.light-.5)*2.4),cc=mix(mix([22,24,36],[150,156,170],SKY.light),SKY.hor,.2+.35*warm);
+  const warm=1-Math.min(1,Math.abs(SKY.light-.5)*2.4),cc=mix(mix(mix([22,24,36],[150,156,170],SKY.light),SKY.hor,.2+.35*warm),mix([120,100,170],[255,244,220],SKY.light),SKY.heaven*.7);
   for(const c of stormClouds){const x=((c.x+now*c.v)%1.6+1.6)%1.6*W-W*.3-px*.5,y=c.y*H;
     for(const [dx,dy,rx,ry] of c.puffs){ctx.fillStyle=rgba(shade(cc,dy<0?.08:-.12),.62);ctx.beginPath();ctx.ellipse(x+dx*c.s,y+dy*c.s,rx*c.s,ry*c.s,0,0,TAU);ctx.fill()}}
 }
 
+const motesH=Array.from({length:90},()=>({x:R(),y:R(),s:.3+R(),p:R()*TAU}));
+function drawHeavenFx(now){
+  const hv=SKY.heaven;if(hv<.02)return;screenTransform();
+  ctx.globalCompositeOperation='lighter';
+  // god rays falling from above
+  for(let i=0;i<6;i++){const x=W*(.1+i*.17)+Math.sin(now/7000+i)*W*.04,w=W*(.05+.03*Math.sin(i*2.3)),a=hv*(.05+.04*Math.sin(now/2300+i))*(.6+.4*SKY.light);
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,`rgba(255,236,190,${a})`);g.addColorStop(1,'rgba(255,236,190,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-w*.2,0);ctx.lineTo(x+w*.2,0);ctx.lineTo(x+w*1.6,H);ctx.lineTo(x-w*.6,H);ctx.closePath();ctx.fill()}
+  // floating motes of light
+  if(!reduce)for(const m of motesH){m.y-=m.s*.0004;if(m.y<0){m.y=1;m.x=R()}
+    const x=((m.x*W+Math.sin(now/2000+m.p)*20)%W+W)%W,y=m.y*H,a=hv*(.25+.35*Math.abs(Math.sin(now/900+m.p)));
+    ctx.fillStyle=`rgba(255,240,200,${a})`;ctx.beginPath();ctx.arc(x,y,1+m.s*1.4,0,TAU);ctx.fill()}
+  ctx.globalCompositeOperation='source-over';
+}
 
-// ===================== Terrain: the age of dragons =====================
-// The ground is a height profile (lowest y wins): rolling land plus mountains, a volcano, twin spires and a mesa.
+// ===================== Terrain: a valley that rises from the ashen wilds to the dragons' Olympus =====================
+// Five caste zones from left to right. Rock turns from ash to basalt to stone to marble to white gold,
+// ruins turn into colonnades, temples and finally the King's palace.
+const ZONES=[
+  {tier:0,name:'Ashen Wilds',caste:'Common',x0:0,x1:1600},
+  {tier:1,name:'Ember Highlands',caste:'Middle',x0:1600,x1:3250},
+  {tier:2,name:'Gilded Spires',caste:'High',x0:3250,x1:4750},
+  {tier:3,name:'Celestial Terraces',caste:'Emperor',x0:4750,x1:6250},
+  {tier:4,name:'Mount Olympus',caste:'The Dragon King',x0:6250,x1:7600}];
+const zoneAt=x=>ZONES.find(z=>x<z.x1)||ZONES[4];
 const STEP=4,NS=Math.ceil(WORLD_W/STEP)+2,SURF=new Float32Array(NS);
 const MOUNTAINS=[
-  {name:'Great Peak',cx:1300,peak:210,half:540,exp:1.25,seed:1,snow:1},
-  {name:'Ashmaw Volcano',cx:3150,peak:330,half:500,exp:1.1,seed:2,crater:.12,volcano:1},
-  {name:'North Spire',cx:4030,peak:190,half:170,exp:1.05,seed:3,snow:1},
-  {name:'South Spire',cx:4320,peak:290,half:180,exp:1.05,seed:4,snow:1},
-  {name:'Old Mesa',cx:5700,peak:430,half:400,exp:.6,seed:5,mesa:.55},
-  {name:'Barrow Hill',cx:650,peak:705,half:330,exp:1.6,seed:6},
-  {name:'Fern Hill',cx:2280,peak:700,half:280,exp:1.6,seed:7},
-  {name:'Citadel Hill',cx:4980,peak:668,half:310,exp:1.6,seed:8}];
-const groundY=x=>872+noise1(x/260,11)*22+noise1(x/70,12)*6;
+  {name:'Barrow Hill',cx:620,peak:705,half:330,exp:1.6,seed:6},
+  {name:'Grim Crag',cx:1330,peak:520,half:260,exp:1.2,seed:9},
+  {name:'Great Peak',cx:2100,peak:210,half:520,exp:1.25,seed:1,snow:1},
+  {name:'Ashmaw Volcano',cx:2880,peak:330,half:470,exp:1.1,seed:2,crater:.12,volcano:1},
+  {name:'North Spire',cx:3660,peak:190,half:170,exp:1.05,seed:3,snow:1},
+  {name:'South Spire',cx:3950,peak:280,half:180,exp:1.05,seed:4,snow:1},
+  {name:'Colonnade Plateau',cx:4420,peak:560,half:300,exp:.7,seed:5,mesa:.6},
+  {name:'Terrace Mount',cx:5450,peak:330,half:620,exp:1,seed:10,terraces:5},
+  {name:'Mount Olympus',cx:6950,peak:430,half:720,exp:1.05,seed:12,terraces:7,olympus:1}];
+const VOLCANO=MOUNTAINS[3],OLYMPUS=MOUNTAINS[8];
+const groundY=x=>872+noise1(x/260,11)*22+noise1(x/70,12)*6-heavenAt(x)*30;
 function mountainY(m,x){
   const t=Math.abs(x-m.cx)/m.half;if(t>=1)return 1e9;
-  let tt=t;if(m.crater&&t<m.crater)return m.peak+12-Math.cos(t/m.crater*Math.PI/2)*14;
-  if(m.mesa)tt=Math.max(0,(t-m.mesa)/(1-m.mesa));
-  const base=groundY(x),jag=(noise1(x/38,m.seed)*16+noise1(x/11,m.seed+9)*5)*(1-t)*(m.mesa?(t<m.mesa?.15:1):1);
-  return m.peak+(base-m.peak)*Math.pow(tt,m.exp)+jag;
+  if(m.crater&&t<m.crater)return m.peak+12-Math.cos(t/m.crater*Math.PI/2)*14;
+  let tt=t;if(m.mesa)tt=Math.max(0,(t-m.mesa)/(1-m.mesa));
+  const base=groundY(x);let y=m.peak+(base-m.peak)*Math.pow(tt,m.exp);
+  if(m.terraces){const step=(base-m.peak)/m.terraces;y=m.peak+Math.floor((y-m.peak)/step+.35)*step*.92+((y-m.peak)%step)*.08;if(m.olympus&&t<.06)y=m.peak}
+  const jag=(noise1(x/38,m.seed)*16+noise1(x/11,m.seed+9)*5)*(1-t)*(m.terraces?.25:m.mesa?(t<m.mesa?.12:1):1);
+  return y+jag;
 }
 for(let i=0;i<NS;i++){const x=i*STEP;let y=groundY(x);for(const m of MOUNTAINS)y=Math.min(y,mountainY(m,x));SURF[i]=y}
 const surf=x=>{const f=clamp(x/STEP,0,NS-2),i=Math.floor(f);return lerp(SURF[i],SURF[i+1],f-i)};
 
-// ---------- perches and nests ----------
+// ---------- perches and nests (each one belongs to the caste of its zone) ----------
 const PERCHES=[],NESTS=[];
 function flatten(x,half,y){for(let i=Math.floor((x-half)/STEP);i<=Math.ceil((x+half)/STEP);i++)if(i>=0&&i<NS)SURF[i]=Math.min(SURF[i],y)}
-function addPerch(name,x,y,type,opts={}){const p={id:PERCHES.length,name,x,y,type,holder:null,...opts};PERCHES.push(p);return p}
-function addNest(perch){const n={id:NESTS.length,name:perch.name,x:perch.x,y:perch.y,perch,owner:null,eggs:[]};perch.nest=n;NESTS.push(n);return n}
-const LEDGES=[];
-// ledges carved into the mountain sides (flat shelves that hold nests)
-for(const [mi,side,t,nest] of [[0,-1,.38,1],[0,1,.52,1],[0,1,.22,0],[1,-1,.42,1],[1,1,.5,1],[2,1,.45,1],[3,-1,.5,0],[4,-1,.62,1]]){
+function addPerch(name,x,y,type,opts={}){const p={id:PERCHES.length,name,x,y,type,holder:null,tier:zoneAt(x).tier,...opts};PERCHES.push(p);return p}
+function addNest(perch){const n={id:NESTS.length,name:perch.name,x:perch.x,y:perch.y,perch,owner:null,eggs:[],tier:perch.tier};perch.nest=n;NESTS.push(n);return n}
+for(const [mi,side,t,nest] of [[1,1,.45,1],[2,-1,.38,1],[2,1,.52,1],[2,1,.22,0],[3,-1,.42,1],[3,1,.5,1],[4,1,.45,1],[5,-1,.5,0]]){
   const m=MOUNTAINS[mi],x=m.cx+side*m.half*t,y=surf(x)-4;flatten(x,34,y);
-  LEDGES.push({x,y,side,m});
   const p=addPerch(`${m.name} ${side<0?'West':'East'} Ledge`,x,y,'ledge',{volcano:!!m.volcano});if(nest)addNest(p);
 }
-// summits
-for(const m of MOUNTAINS.slice(0,5)){
-  if(m.crater){addPerch(`${m.name} West Rim`,m.cx-m.half*m.crater*1.15,surf(m.cx-m.half*m.crater*1.15),'peak',{volcano:1});
-    addPerch(`${m.name} East Rim`,m.cx+m.half*m.crater*1.15,surf(m.cx+m.half*m.crater*1.15),'peak',{volcano:1});continue}
+for(const m of [MOUNTAINS[1],MOUNTAINS[2],MOUNTAINS[4],MOUNTAINS[5]]){
   let bx=m.cx,by=1e9;for(let x=m.cx-m.half*.2;x<m.cx+m.half*.2;x+=STEP){const y=surf(x);if(y<by){by=y;bx=x}}
-  if(!m.mesa)flatten(bx,16,by);
-  const p=addPerch(`${m.name} Summit`,bx,surf(bx),'peak');if(m.mesa){p.name='Old Mesa Plateau';addNest(p)}
+  flatten(bx,16,by);addPerch(`${m.name} Summit`,bx,surf(bx),'peak');
 }
-// hilltops
-for(const m of MOUNTAINS.slice(5))addPerch(`${m.name} Crown`,m.cx+(m.name==='Barrow Hill'?-120:m.name==='Citadel Hill'?140:0),0,'hill');
+for(const s of [-1,1]){const x=VOLCANO.cx+s*VOLCANO.half*VOLCANO.crater*1.15;addPerch(`Ashmaw ${s<0?'West':'East'} Rim`,x,surf(x),'peak',{volcano:1})}
+addPerch('Barrow Hill Crown',500,0,'hill');addPerch('Fern Knoll',1720,0,'hill');
 for(const p of PERCHES)if(p.type==='hill'){flatten(p.x,22,surf(p.x));p.y=surf(p.x)}
 
-// ---------- structures: the old bridge and tower, and a ruined citadel ----------
+// ---------- structures ----------
 const STRUCTS=[];
 (function(){
-  // arched stone bridge across Barrow Hill and a broken watchtower beside it
-  const bx0=430,bx1=860,deck=surf(645)-150;
-  STRUCTS.push({kind:'bridge',x0:bx0,x1:bx1,deck});
-  const tx=930,tb=surf(tx)+6,tt=tb-280;STRUCTS.push({kind:'tower',x:tx,base:tb,top:tt,w:62,broken:1});
-  addNest(addPerch('Watchtower Crown',tx,tt,'ruin'));
-  addPerch('Old Bridge',645,deck,'ruin');
-  // citadel on Citadel Hill
-  const cx=4980,cb=surf(cx)+8;
-  STRUCTS.push({kind:'wall',x0:cx-170,x1:cx+170,base:cb,top:cb-120});
-  for(const [dx,h,w,name,nest] of [[-190,250,70,'Citadel West Tower',0],[200,320,80,'Citadel Keep',1],[30,190,56,'Citadel Gatehouse',0]]){
-    const x=cx+dx,b=surf(x)+8,t=b-h;STRUCTS.push({kind:'tower',x,base:b,top:t,w});const p=addPerch(name,x,t,'ruin');if(nest)addNest(p)}
+  // zone 1: an old bridge and a broken watchtower
+  const deck=surf(620)-150;STRUCTS.push({kind:'bridge',x0:420,x1:830,deck});
+  const tx=910,tb=surf(tx)+6,tt=tb-280;STRUCTS.push({kind:'tower',x:tx,base:tb,top:tt,w:62,broken:1});
+  addNest(addPerch('Watchtower Crown',tx,tt,'ruin'));addPerch('Old Bridge',620,deck,'ruin');
+  // zone 3: a marble colonnade on the plateau
+  const pc=MOUNTAINS[6],py=surf(pc.cx);
+  for(let i=0;i<7;i++){const x=pc.cx-150+i*50,h=i===2||i===5?60+i*6:130;STRUCTS.push({kind:'column',x,base:py+2,top:py-h,w:18,broken:h<100});if(i===1||i===4||i===6)addPerch(`Colonnade Pillar ${i+1}`,x,py-h-6,'ruin')}
+  STRUCTS.push({kind:'lintel',x0:pc.cx-160,x1:pc.cx-40,y:py-136});
+  addNest(addPerch('Colonnade Altar',pc.cx+40,py,'ruin'));
+  // zone 4: marble temples on the terraces and three floating islands
+  const tm=MOUNTAINS[7];
+  for(const [dx,name,nest] of [[-.62,'Temple of Dawn',1],[-.25,'Temple of Tides',1],[.3,'Temple of Stars',1],[.66,'Temple of Winds',0]]){
+    const x=tm.cx+dx*tm.half,b=surf(x);flatten(x,60,b);STRUCTS.push({kind:'temple',x,base:b,w:110,h:92,tier:3});const p=addPerch(name,x,b-92-26,'ruin');if(nest)addNest(p)}
+  for(const [x,y,name] of [[4950,300,'Skyhold Isle'],[5300,180,'Isle of Choirs'],[5980,250,'Isle of Halos']]){
+    STRUCTS.push({kind:'island',x,y,w:150});STRUCTS.push({kind:'temple',x,base:y,w:80,h:64,tier:3});addNest(addPerch(name,x,y-64-20,'island'))}
+  // zone 5: the King's palace and the Throne of Heaven on Olympus
+  const ox=OLYMPUS.cx,oy=surf(ox);flatten(ox,140,oy);
+  STRUCTS.push({kind:'palace',x:ox,base:oy,w:340,h:210});
+  for(const dx of [-480,-300,300,480]){const x=ox+dx,b=surf(x);STRUCTS.push({kind:'temple',x,base:b,w:96,h:80,tier:4});addPerch(dx<0?`Olympus West Shrine ${dx===-480?'II':'I'}`:`Olympus East Shrine ${dx===480?'II':'I'}`,x,b-80-24,'ruin')}
+  addPerch('Throne of Heaven',ox,oy-6,'throne',{king:1});              // a golden dais in front of the palace
+  addNest(PERCHES.find(p=>p.name==='Olympus West Shrine I'));addNest(PERCHES.find(p=>p.name==='Olympus East Shrine I'));
 })();
-const perchByType=t=>PERCHES.filter(p=>p.type===t);
 
 // ---------- pre-built shapes ----------
-let facetLight,facetDark,mossPath,terrainPath,strataPath,snowPath,lavaPaths=[],pines=[],farRange,midRange,fgPath,fgTrees;
+let terrainPath,strataPath,goldVeins,snowPath,lavaPaths=[],trees=[],farRange,midRange,fgPath,fgTrees,facetLight,facetDark,mossPath,lightFalls=[];
 function buildTerrain(){
   const r=rng(4242);
   terrainPath=new Path2D();terrainPath.moveTo(-20,WORLD_H+20);for(let i=0;i<NS;i++)terrainPath.lineTo(i*STEP,SURF[i]);terrainPath.lineTo(WORLD_W+20,WORLD_H+20);terrainPath.closePath();
-  // rock strata: angled cracks on the steep faces
-  strataPath=new Path2D();
-  for(let k=0;k<520;k++){const x=r()*WORLD_W,y=surf(x)+10+r()*180;if(y>860)continue;const a=(r()-.5)*1.2+(r()<.5?.6:-.6),L=12+r()*40;
-    strataPath.moveTo(x,y);strataPath.lineTo(x+Math.cos(a)*L,y+Math.sin(a)*L*.4+L*.3)}
-  // sculpted rock: lit and shadowed facets on the slopes
+  strataPath=new Path2D();goldVeins=new Path2D();
+  for(let k=0;k<720;k++){const x=r()*WORLD_W,y=surf(x)+10+r()*180;if(y>870)continue;const a=(r()-.5)*1.2+(r()<.5?.6:-.6),L=12+r()*40,p=x>4600&&r()<.6?goldVeins:strataPath;
+    p.moveTo(x,y);p.lineTo(x+Math.cos(a)*L,y+Math.sin(a)*L*.4+L*.3)}
   facetLight=new Path2D();facetDark=new Path2D();mossPath=new Path2D();
-  for(let k=0;k<700;k++){const x=r()*WORLD_W,y0=surf(x);if(y0>840)continue;const y=y0+r()*Math.min(260,(880-y0)),w=14+r()*46,h=10+r()*36,sl=surf(x+6)-surf(x-6);
+  for(let k=0;k<900;k++){const x=r()*WORLD_W,y0=surf(x);if(y0>850)continue;const y=y0+r()*Math.min(260,(880-y0)),w=14+r()*46,h=10+r()*36,sl=surf(x+6)-surf(x-6);
     const p=sl<0?facetLight:facetDark;p.moveTo(x,y);p.lineTo(x+w*.5,y-h*.4);p.lineTo(x+w,y+h*.2);p.lineTo(x+w*.4,y+h);p.closePath()}
-  for(let x=0;x<WORLD_W;x+=6){const y=surf(x);if(y<640||y>860)continue;const h=6+r()*16;mossPath.moveTo(x-4,y+3);mossPath.lineTo(x,y-h*.3);mossPath.lineTo(x+4,y+3+h*.2);mossPath.closePath()}
-  // snow caps on the high peaks
+  for(let x=0;x<WORLD_W;x+=6){const y=surf(x);if(y<620||y>870)continue;const h=6+r()*16;mossPath.moveTo(x-4,y+3);mossPath.lineTo(x,y-h*.3);mossPath.lineTo(x+4,y+3+h*.2);mossPath.closePath()}
   snowPath=new Path2D();
-  for(const m of MOUNTAINS.filter(m=>m.snow)){const line=m.peak+95;let open=false,pts=[];
-    for(let x=m.cx-m.half;x<=m.cx+m.half;x+=STEP){const y=surf(x);if(y<line){pts.push([x,y])}}
+  for(const m of MOUNTAINS.filter(m=>m.snow)){const line=m.peak+95,pts=[];
+    for(let x=m.cx-m.half;x<=m.cx+m.half;x+=STEP){const y=surf(x);if(y<line)pts.push([x,y])}
     if(pts.length<2)continue;snowPath.moveTo(pts[0][0],pts[0][1]);pts.forEach(p=>snowPath.lineTo(p[0],p[1]));
     for(let j=pts.length-1;j>=0;j-=3){const [x,y]=pts[j],d=(line-y)*.55+8+noise1(x/9,m.seed)*14;snowPath.lineTo(x,Math.min(line,y+d))}snowPath.closePath()}
-  // lava rivers down the volcano
-  const v=MOUNTAINS[1];lavaPaths=[];
-  for(const [dir,len] of [[-1,.75],[1,.55],[-1,.4]]){const p=new Path2D();let x=v.cx+dir*v.half*.08;p.moveTo(x,surf(x));
-    for(let t=0;t<len;t+=.02){x=v.cx+dir*v.half*(.08+t)+noise1(t*12,dir+5)*14;p.lineTo(x,surf(x)+3)}lavaPaths.push(p)}
-  // pine forests in the low valleys
-  pines=[];for(let x=0;x<WORLD_W;x+=10+r()*14){const y=surf(x);if(y<800||r()<.25)continue;pines.push([x,y+4,24+r()*46,r()])}
-  // distant ranges (parallax), built wide enough for any camera position
+  lavaPaths=[];
+  for(const [dir,len] of [[-1,.75],[1,.55],[-1,.4]]){const p=new Path2D();let x=VOLCANO.cx+dir*VOLCANO.half*.08;p.moveTo(x,surf(x));
+    for(let t=0;t<len;t+=.02){x=VOLCANO.cx+dir*VOLCANO.half*(.08+t)+noise1(t*12,dir+5)*14;p.lineTo(x,surf(x)+3)}lavaPaths.push(p)}
+  // trees change with the caste: dead pines, pines, cypresses, blossom trees, golden trees
+  trees=[];for(let x=0;x<WORLD_W;x+=10+r()*14){const y=surf(x);if(y<790||r()<.3)continue;trees.push({x,y:y+4,h:24+r()*46,v:r(),z:zoneAt(x).tier})}
   const ridge=(base,amp,seed,width,step)=>{const p=new Path2D();p.moveTo(-50,WORLD_H+50);
     for(let x=-50;x<=width;x+=step){const y=base-amp*(.55+.3*noise1(x/420,seed)+.18*noise1(x/120,seed+1)+.06*noise1(x/30,seed+2))-Math.max(0,noise1(x/900,seed+3))*amp*.9;p.lineTo(x,y)}
     p.lineTo(width,WORLD_H+50);p.closePath();return p};
-  farRange=ridge(720,420,31,9000,14);midRange=ridge(800,330,41,9000,10);
-  // foreground rocks and pines that pass in front of everything
+  farRange=ridge(720,420,31,11000,14);midRange=ridge(800,330,41,11000,10);
   fgPath=new Path2D();fgTrees=[];
-  for(let x=-50;x<WORLD_W*1.2+3000;x+=180+r()*260){
+  for(let x=-50;x<WORLD_W*1.25+3000;x+=180+r()*260){
     if(r()<.55){const w=60+r()*140,h=40+r()*90;fgPath.moveTo(x,WORLD_H+10);fgPath.lineTo(x+w*.2,WORLD_H-h);fgPath.lineTo(x+w*.55,WORLD_H-h*1.1);fgPath.lineTo(x+w,WORLD_H+10);fgPath.closePath()}
     else fgTrees.push([x,WORLD_H+10,140+r()*110])}
+  // falls of liquid light pouring from Olympus' terraces
+  lightFalls=[-260,-120,140,300].map(dx=>{const x=OLYMPUS.cx+dx;return{x,y:surf(x),len:Math.min(300,WORLD_H-surf(x))}});
 }
 buildTerrain();
 
@@ -297,72 +345,115 @@ function pineShape(p,x,y,h,lean=0){p.moveTo(x-h*.04,y);p.lineTo(x-h*.04+lean,y-h
   p.lineTo(x+h*.04+lean,y-h*.25);p.lineTo(x+h*.04,y);p.closePath()}
 
 const layerCol=(night,day,haze)=>mix(mix(night,day,SKY.light),SKY.hor,haze*(.15+.3*(1-SKY.night)));
+// rock color by caste: ash → basalt → stone → marble → white gold
+const ROCK=[[[18,16,22],[70,64,68]],[[22,16,16],[84,64,58]],[[26,26,32],[128,124,120]],[[46,44,60],[200,194,182]],[[60,54,70],[240,230,204]]];
 function drawBackLayers(){
   worldTransform(.22);ctx.fillStyle=rgb(layerCol([16,16,30],[92,100,128],.75));ctx.fill(farRange);
   worldTransform(.5);ctx.fillStyle=rgb(layerCol([12,12,22],[66,70,90],.45));ctx.fill(midRange);
-  // mist between the ranges
   screenTransform();const mg=ctx.createLinearGradient(0,H*.55,0,H);mg.addColorStop(0,rgba(SKY.hor,0));mg.addColorStop(1,rgba(mix(SKY.hor,[40,40,50],.5),.25+.15*SKY.night));
   ctx.fillStyle=mg;ctx.fillRect(0,H*.55,W,H*.45);
 }
 function drawTerrain(now){
   worldTransform(1);
-  const top=layerCol([20,18,26],[78,74,80],.12),bot=layerCol([8,8,12],[34,32,36],.05);
-  const g=ctx.createLinearGradient(0,180,0,WORLD_H);g.addColorStop(0,rgb(shade(top,.18)));g.addColorStop(.45,rgb(top));g.addColorStop(1,rgb(bot));
+  const g=ctx.createLinearGradient(0,0,WORLD_W,0);
+  ZONES.forEach(z=>{const [n,d]=ROCK[z.tier],c=layerCol(n,d,.1);g.addColorStop(clamp((z.x0+z.x1)/2/WORLD_W,0,1),rgb(c))});
   ctx.fillStyle=g;ctx.fill(terrainPath);
-  ctx.fillStyle=rgba(mix([60,60,80],[200,190,170],SKY.light),.1);ctx.fill(facetLight);
-  ctx.fillStyle=rgba([0,0,0],.18);ctx.fill(facetDark);
-  ctx.fillStyle=rgba(layerCol([10,16,12],[52,72,46],.05),.85);ctx.fill(mossPath);
-  ctx.strokeStyle=rgba([0,0,0],.28);ctx.lineWidth=1.4;ctx.stroke(strataPath);
+  const vg=ctx.createLinearGradient(0,150,0,WORLD_H);vg.addColorStop(0,'rgba(255,255,255,.1)');vg.addColorStop(.45,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');
+  ctx.fillStyle=vg;ctx.fill(terrainPath);
+  ctx.fillStyle=rgba(mix([60,60,80],[220,210,190],SKY.light),.06);ctx.fill(facetLight);
+  ctx.fillStyle=rgba([0,0,0],.08);ctx.fill(facetDark);
+  ctx.fillStyle=rgba(layerCol([10,16,12],[52,72,46],.05),.8);ctx.fill(mossPath);
+  ctx.strokeStyle=rgba([0,0,0],.26);ctx.lineWidth=1.4;ctx.stroke(strataPath);
+  ctx.strokeStyle=rgba([226,184,92],.55+.25*SKY.night);ctx.lineWidth=1.6;ctx.stroke(goldVeins);
   ctx.fillStyle=rgba(mix(mix([120,130,160],[236,240,248],SKY.light),SKY.hor,.15),.92);ctx.fill(snowPath);
-  // rim light along the ridgeline, warm at dusk
   ctx.strokeStyle=rgba(mix(SKY.hor,[255,255,255],.2),.25+.25*(1-SKY.night));ctx.lineWidth=2.2;ctx.stroke(terrainPath);
   // lava
-  const v=MOUNTAINS[1],pulse=reduce?.8:.75+.25*Math.sin(now/600);
-  ctx.lineCap='round';
+  const pulse=reduce?.8:.75+.25*Math.sin(now/600);ctx.lineCap='round';
   for(const [w,c,a] of [[16,[255,80,20],.25],[7,[255,120,40],.8],[2.5,[255,220,120],.9]]){ctx.strokeStyle=rgba(c,a*pulse);ctx.lineWidth=w;lavaPaths.forEach(p=>ctx.stroke(p))}
-  const cg=ctx.createRadialGradient(v.cx,v.peak,0,v.cx,v.peak,170);cg.addColorStop(0,`rgba(255,140,40,${.55*pulse})`);cg.addColorStop(1,'rgba(255,80,20,0)');
-  ctx.fillStyle=cg;ctx.fillRect(v.cx-170,v.peak-170,340,340);
-  // structures
-  for(const s of STRUCTS)drawStruct(s);
-  // pines (only those in view)
-  const x0=cam.x-60,x1=cam.x+viewW()+60,pc=rgb(layerCol([8,12,10],[34,52,40],.1)),p=new Path2D();
-  for(const [x,y,h,v2] of pines)if(x>x0&&x<x1)pineShape(p,x,y,h,(v2-.5)*4);
-  ctx.fillStyle=pc;ctx.fill(p);
+  const cg=ctx.createRadialGradient(VOLCANO.cx,VOLCANO.peak,0,VOLCANO.cx,VOLCANO.peak,170);cg.addColorStop(0,`rgba(255,140,40,${.55*pulse})`);cg.addColorStop(1,'rgba(255,80,20,0)');
+  ctx.fillStyle=cg;ctx.fillRect(VOLCANO.cx-170,VOLCANO.peak-170,340,340);
+  // falls of light on Olympus
+  for(const f of lightFalls){const lg=ctx.createLinearGradient(0,f.y,0,f.y+f.len);lg.addColorStop(0,'rgba(255,246,220,.85)');lg.addColorStop(1,'rgba(255,230,170,0)');
+    ctx.strokeStyle=lg;ctx.lineWidth=7;ctx.setLineDash([16,10]);ctx.lineDashOffset=reduce?0:-now*.08;ctx.beginPath();ctx.moveTo(f.x,f.y);ctx.lineTo(f.x+4,f.y+f.len);ctx.stroke()}
+  ctx.setLineDash([]);
+  for(const s of STRUCTS)drawStruct(s,now);
+  drawTrees();
 }
-function drawStruct(s){
-  const stone=rgb(layerCol([22,22,28],[96,94,98],.1)),dark=rgb(layerCol([10,10,14],[52,50,56],.05)),moss=rgba(layerCol([14,24,16],[70,96,60],.05),.8);
+function drawTrees(){
+  const x0=cam.x-80,x1=cam.x+viewW()+80;
+  const kinds=[[[8,10,10],[40,44,40]],[[8,12,10],[34,52,40]],[[8,14,12],[30,64,46]],[[30,14,30],[236,180,206]],[[40,32,12],[246,206,110]]];
+  const paths=kinds.map(()=>new Path2D()),trunks=new Path2D();
+  for(const t of trees){if(t.x<x0||t.x>x1)continue;
+    if(t.z<=1)pineShape(paths[t.z],t.x,t.y,t.h,(t.v-.5)*4);
+    else if(t.z===2){paths[2].moveTo(t.x+t.h*.12,t.y-t.h*.55);paths[2].ellipse(t.x,t.y-t.h*.55,t.h*.12,t.h*.55,0,0,TAU)}
+    else{trunks.rect(t.x-1.5,t.y-t.h*.5,3,t.h*.5);for(let k=0;k<4;k++){const a=k*1.7+t.v*6;paths[t.z].moveTo(t.x+Math.cos(a)*t.h*.18+t.h*.22,t.y-t.h*.6+Math.sin(a)*t.h*.12);paths[t.z].ellipse(t.x+Math.cos(a)*t.h*.18,t.y-t.h*.6+Math.sin(a)*t.h*.12,t.h*.22,t.h*.16,0,0,TAU)}}}
+  ctx.fillStyle=rgb(layerCol([8,6,6],[60,44,34],.05));ctx.fill(trunks);
+  paths.forEach((p,i)=>{ctx.fillStyle=rgb(layerCol(kinds[i][0],kinds[i][1],.1));ctx.fill(p)});
+  // golden trees glow softly at night
+  if(SKY.night>.2){ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(255,210,120,${.12*SKY.night})`;ctx.fill(paths[4]);ctx.globalCompositeOperation='source-over'}
+}
+function drawStruct(s,now){
+  const tier=s.tier??zoneAt(s.x??s.x0).tier,marble=tier>=2;
+  const stone=rgb(layerCol(marble?[40,40,52]:[22,22,28],marble?[226,220,208]:[96,94,98],.1)),dark=rgb(layerCol(marble?[24,24,34]:[10,10,14],marble?[150,144,136]:[52,50,56],.05));
+  const gold=rgb(layerCol([90,70,30],[236,196,96],0)),moss=rgba(layerCol([14,24,16],[70,96,60],.05),.8);
   ctx.fillStyle=stone;
   if(s.kind==='bridge'){const n=4,span=(s.x1-s.x0)/n;
     ctx.beginPath();ctx.moveTo(s.x0,s.deck-14);ctx.lineTo(s.x1,s.deck-14);ctx.lineTo(s.x1,s.deck+18);
-    for(let i=n-1;i>=0;i--){const xa=s.x0+i*span;const pb=surf(xa+span*.1);ctx.lineTo(xa+span*.86,s.deck+18);ctx.lineTo(xa+span*.86,pb+4);ctx.lineTo(xa+span*.8,pb+4);
+    for(let i=n-1;i>=0;i--){const xa=s.x0+i*span,pb=surf(xa+span*.1);ctx.lineTo(xa+span*.86,s.deck+18);ctx.lineTo(xa+span*.86,pb+4);ctx.lineTo(xa+span*.8,pb+4);
       ctx.lineTo(xa+span*.8,s.deck+40);ctx.quadraticCurveTo(xa+span*.47,s.deck-4,xa+span*.14,s.deck+40);ctx.lineTo(xa+span*.14,surf(xa)+4);ctx.lineTo(xa,surf(xa)+4)}
-    ctx.lineTo(s.x0,s.deck-14);ctx.closePath();ctx.fill();
-    ctx.fillStyle=moss;ctx.fillRect(s.x0,s.deck-16,s.x1-s.x0,5);
-    ctx.strokeStyle=dark;ctx.lineWidth=1;for(let x=s.x0;x<s.x1;x+=26){ctx.beginPath();ctx.moveTo(x,s.deck-14);ctx.lineTo(x,s.deck+18);ctx.stroke()}
+    ctx.lineTo(s.x0,s.deck-14);ctx.closePath();ctx.fill();ctx.fillStyle=moss;ctx.fillRect(s.x0,s.deck-16,s.x1-s.x0,5);
   }else if(s.kind==='tower'){const w=s.w;
-    ctx.beginPath();ctx.moveTo(s.x-w*.55,s.base);ctx.lineTo(s.x-w*.45,s.top+10);
-    if(s.broken){ctx.lineTo(s.x-w*.3,s.top);ctx.lineTo(s.x-w*.1,s.top+16);ctx.lineTo(s.x+w*.15,s.top-6);ctx.lineTo(s.x+w*.32,s.top+12)}
-    else{for(let k=0;k<5;k++){const x=s.x-w*.5+k*w*.25;ctx.lineTo(x,s.top-12);ctx.lineTo(x+w*.12,s.top-12);ctx.lineTo(x+w*.12,s.top)}}
+    ctx.beginPath();ctx.moveTo(s.x-w*.55,s.base);ctx.lineTo(s.x-w*.45,s.top+10);ctx.lineTo(s.x-w*.3,s.top);ctx.lineTo(s.x-w*.1,s.top+16);ctx.lineTo(s.x+w*.15,s.top-6);ctx.lineTo(s.x+w*.32,s.top+12);
     ctx.lineTo(s.x+w*.45,s.top+10);ctx.lineTo(s.x+w*.55,s.base);ctx.closePath();ctx.fill();
     ctx.strokeStyle=dark;ctx.lineWidth=1;for(let y=s.top+30;y<s.base;y+=22){ctx.beginPath();ctx.moveTo(s.x-w*.5,y);ctx.lineTo(s.x+w*.5,y);ctx.stroke()}
-    // arrow-slit windows glow faintly at night (old fires still burning)
     for(let y=s.top+50;y<s.base-30;y+=70){ctx.fillStyle=SKY.night>.4?`rgba(255,150,70,${.6*SKY.night})`:dark;ctx.fillRect(s.x-3,y,6,18)}
-    ctx.fillStyle=moss;ctx.fillRect(s.x-w*.5,s.top+8,w,4);
-  }else if(s.kind==='wall'){ctx.fillRect(s.x0,s.top,s.x1-s.x0,s.base-s.top);
-    ctx.fillStyle=dark;for(let x=s.x0;x<s.x1;x+=30)ctx.fillRect(x,s.top-12,14,12);
-    ctx.beginPath();ctx.moveTo(s.x0+120,s.base);ctx.lineTo(s.x0+120,s.base-60);ctx.quadraticCurveTo(s.x0+150,s.base-92,s.x0+180,s.base-60);ctx.lineTo(s.x0+180,s.base);ctx.fill()}
+  }else if(s.kind==='column'){column(s.x,s.base,s.top,s.w,stone,dark,s.broken)}
+  else if(s.kind==='lintel'){ctx.fillRect(s.x0,s.y-12,s.x1-s.x0,14);ctx.fillStyle=dark;ctx.fillRect(s.x0,s.y,s.x1-s.x0,3)}
+  else if(s.kind==='island'){ctx.beginPath();ctx.moveTo(s.x-s.w*.75,s.y);ctx.quadraticCurveTo(s.x,s.y-12,s.x+s.w*.75,s.y);
+    ctx.lineTo(s.x+s.w*.5,s.y+40);ctx.lineTo(s.x+s.w*.2,s.y+90);ctx.lineTo(s.x,s.y+150);ctx.lineTo(s.x-s.w*.25,s.y+85);ctx.lineTo(s.x-s.w*.55,s.y+45);ctx.closePath();
+    ctx.fillStyle=rgb(layerCol([30,28,40],[150,140,130],.15));ctx.fill();ctx.fillStyle=moss;ctx.fillRect(s.x-s.w*.72,s.y-4,s.w*1.44,5);
+    const glow=ctx.createRadialGradient(s.x,s.y+120,0,s.x,s.y+120,120);glow.addColorStop(0,'rgba(170,220,255,.25)');glow.addColorStop(1,'rgba(170,220,255,0)');ctx.fillStyle=glow;ctx.fillRect(s.x-120,s.y,240,240)}
+  else if(s.kind==='temple'){temple(s.x,s.base,s.w,s.h,stone,dark,gold,s.tier>=4)}
+  else if(s.kind==='palace'){
+    const {x,base,w,h}=s;
+    for(let k=0;k<4;k++){ctx.fillStyle=k%2?dark:stone;ctx.fillRect(x-w*.6+k*12,base-8-k*8,w*1.2-k*24,8)}
+    temple(x-w*.28,base-32,w*.42,h*.62,stone,dark,gold,1);temple(x+w*.28,base-32,w*.42,h*.62,stone,dark,gold,1);
+    // central hall with a golden dome
+    ctx.fillStyle=stone;ctx.fillRect(x-w*.2,base-32-h*.8,w*.4,h*.8);
+    for(let i=0;i<5;i++)column(x-w*.18+i*w*.09,base-32,base-32-h*.8,9,stone,dark,0);
+    ctx.fillStyle=gold;ctx.fillRect(x-w*.22,base-32-h*.86,w*.44,10);
+    ctx.beginPath();ctx.ellipse(x,base-32-h*.86,w*.17,h*.34,0,Math.PI,0);ctx.fill();
+    // the throne
+    const tx=x,ty=base-14;ctx.fillStyle=gold;ctx.beginPath();ctx.moveTo(tx-120,ty+14);ctx.lineTo(tx+120,ty+14);ctx.lineTo(tx+96,ty+2);ctx.lineTo(tx-96,ty+2);ctx.closePath();ctx.fill();ctx.fillStyle=stone;ctx.fillRect(tx-90,ty+2,180,4);
+  }
+}
+function column(x,base,top,w,stone,dark,broken){
+  ctx.fillStyle=stone;ctx.fillRect(x-w*.65,base-6,w*1.3,6);
+  ctx.beginPath();ctx.moveTo(x-w/2,base-6);ctx.lineTo(x-w*.45,top+8);
+  if(broken){ctx.lineTo(x-w*.1,top);ctx.lineTo(x+w*.2,top+9);ctx.lineTo(x+w*.45,top+3)}else{ctx.lineTo(x+w*.45,top+8)}
+  ctx.lineTo(x+w/2,base-6);ctx.closePath();ctx.fill();
+  if(!broken){ctx.fillRect(x-w*.7,top,w*1.4,8)}
+  ctx.strokeStyle=dark;ctx.lineWidth=.8;for(let k=-1;k<=1;k++){ctx.beginPath();ctx.moveTo(x+k*w*.22,base-8);ctx.lineTo(x+k*w*.2,top+(broken?14:10));ctx.stroke()}
+}
+function temple(x,base,w,h,stone,dark,gold,royal){
+  ctx.fillStyle=dark;ctx.fillRect(x-w*.58,base-8,w*1.16,8);ctx.fillStyle=stone;ctx.fillRect(x-w*.52,base-14,w*1.04,6);
+  ctx.fillStyle=SKY.night>.3?`rgba(255,200,120,${.35+.4*SKY.night})`:dark;ctx.fillRect(x-w*.42,base-14-h*.72,w*.84,h*.72);
+  const n=royal?6:4;for(let i=0;i<n;i++)column(x-w*.45+i*w*.9/(n-1),base-14,base-14-h*.75,w*.09,stone,dark,0);
+  ctx.fillStyle=stone;ctx.fillRect(x-w*.52,base-14-h*.82,w*1.04,h*.08);
+  ctx.beginPath();ctx.moveTo(x-w*.56,base-14-h*.82);ctx.lineTo(x,base-14-h);ctx.lineTo(x+w*.56,base-14-h*.82);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=gold;ctx.lineWidth=royal?2.4:1.4;ctx.stroke();
+  if(royal){ctx.fillStyle=gold;ctx.beginPath();ctx.arc(x,base-14-h*.9,4,0,TAU);ctx.fill()}
 }
 function drawForeground(){
-  worldTransform(1.22);const c=rgb(layerCol([3,3,6],[20,22,24],0));ctx.fillStyle=c;ctx.fill(fgPath);
-  const p=new Path2D();for(const [x,y,h] of fgTrees)pineShape(p,x,y,h,0);ctx.fill(p);
+  worldTransform(1.22);ctx.fillStyle=rgb(layerCol([3,3,6],[20,22,24],0));ctx.fill(fgPath);
+  const p=new Path2D();for(const [x,y,h] of fgTrees)if(x<WORLD_W*.62)pineShape(p,x,y,h,0);ctx.fill(p);
 }
 
 // ---------- nests and eggs ----------
 function drawNest(n,now){
-  worldTransform(1);const twig=rgb(layerCol([30,22,16],[110,86,58],.05)),dark=rgb(layerCol([14,10,8],[60,44,30],0));
+  worldTransform(1);const royal=n.tier>=3,twig=royal?rgb(layerCol([70,56,24],[236,196,96],0)):rgb(layerCol([30,22,16],[110,86,58],.05)),dark=royal?rgb(layerCol([40,30,14],[170,130,60],0)):rgb(layerCol([14,10,8],[60,44,30],0));
   ctx.lineCap='round';
-  for(let k=0;k<26;k++){const a=k*1.7,x=n.x+Math.cos(a)*30,y=n.y-4+Math.sin(a)*4;
-    ctx.strokeStyle=k%2?twig:dark;ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(x-16,y-3+(k%3));ctx.lineTo(x+16,y+(k%4)-2);ctx.stroke()}
+  for(let k=0;k<26;k++){const a=k*1.7,x=n.x+Math.cos(a)*30,y=n.y-4+Math.sin(a)*4;ctx.strokeStyle=k%2?twig:dark;ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(x-16,y-3+(k%3));ctx.lineTo(x+16,y+(k%4)-2);ctx.stroke()}
   ctx.fillStyle=dark;ctx.beginPath();ctx.ellipse(n.x,n.y-3,32,7,0,0,Math.PI);ctx.fill();
   n.eggs.forEach((e,i)=>{
     const ex=n.x+(i-(n.eggs.length-1)/2)*15,t=(now-e.laid)/(e.hatchAt-e.laid),wob=t>.8&&!reduce?Math.sin(now/60+i)*.25*(t-.8)*5:0;
@@ -378,12 +469,13 @@ function drawEggGlow(now){
   worldTransform(1);
   for(const n of NESTS)n.eggs.forEach((e,i)=>{const ex=n.x+(i-(n.eggs.length-1)/2)*15,t=clamp((now-e.laid)/(e.hatchAt-e.laid),0,1),a=(.15+.35*t)*(reduce?1:.7+.3*Math.sin(now/300+i));
     const g=ctx.createRadialGradient(ex,n.y-11,0,ex,n.y-11,28);g.addColorStop(0,rgba(e.glow,a));g.addColorStop(1,rgba(e.glow,0));ctx.fillStyle=g;ctx.fillRect(ex-28,n.y-39,56,56)});
+  // the Throne of Heaven radiates even when empty
+  const t=PERCHES.find(p=>p.king),pulse=reduce?.8:.7+.3*Math.sin(now/900),R0=260;
+  const g=ctx.createRadialGradient(t.x,t.y-60,0,t.x,t.y-60,R0);g.addColorStop(0,`rgba(255,236,180,${.35*pulse})`);g.addColorStop(1,'rgba(255,236,180,0)');ctx.fillStyle=g;ctx.fillRect(t.x-R0,t.y-60-R0,R0*2,R0*2);
 }
-
-// ---------- volcano smoke and embers ----------
 const embers=Array.from({length:60},()=>({t:R(),s:.4+R(),o:R()*TAU}));
 function drawVolcanoFx(now){
-  worldTransform(1);const v=MOUNTAINS[1];
+  worldTransform(1);const v=VOLCANO;
   for(let j=0;j<10;j++){const t=((now*.00004*(1+j*.05)+j/10)%1),x=v.cx+Math.sin(t*5+j)*30*t+t*220,y=v.peak-t*520,r=20+t*90;
     ctx.fillStyle=rgba(mix([30,26,26],SKY.hor,.25),(1-t)*.35);ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill()}
   if(reduce)return;
@@ -394,214 +486,310 @@ function drawVolcanoFx(now){
 }
 
 
-// ===================== Dragons: species, skeleton rig, poses and painting =====================
-// Every winged dragon is a skeleton (chest, pelvis, neck chain, tail chain, wings, legs) rebuilt each frame
-// from a handful of pose values (pitch, flap, wing fold, legs down, sit, sleep, jaw). The AI only moves the
-// body and sets target poses; this file turns those numbers into a painted dragon.
-const SPECIES={
-  drake:{label:'Drake',wings:1,legs:4,neckN:6,neckL:13,tailN:14,tailL:14,body:72,thick:27,arm:46,fore:52,fingers:[104,90,76,60],leg:[30,30],speed:3.1,horn:1,
-    palettes:[
-      {name:'Verdant',body:[72,118,64],belly:[226,218,186],wing:[206,112,48],spike:[170,64,40],eye:'255,196,70'},
-      {name:'Tidewater',body:[70,128,166],belly:[222,236,230],wing:[118,168,120],spike:[54,96,146],eye:'120,230,255'},
-      {name:'Bronze',body:[138,98,50],belly:[230,202,150],wing:[124,72,40],spike:[90,52,30],eye:'255,170,60'},
-      {name:'Obsidian',body:[40,40,50],belly:[120,110,100],wing:[96,32,42],spike:[150,40,40],eye:'255,70,70'}]},
-  fire:{label:'Fire Drake',wings:1,legs:4,neckN:6,neckL:13,tailN:14,tailL:14,body:76,thick:29,arm:48,fore:54,fingers:[108,94,78,62],leg:[31,31],speed:3,horn:2,fire:1,volcano:1,
-    palettes:[
-      {name:'Ember',body:[150,40,30],belly:[240,186,118],wing:[112,30,22],spike:[44,20,20],eye:'255,210,90'},
-      {name:'Cinder',body:[52,26,26],belly:[206,96,42],wing:[150,42,22],spike:[240,120,40],eye:'255,130,40'}]},
-  wyvern:{label:'Wyvern',wings:1,legs:2,neckN:5,neckL:12,tailN:16,tailL:12.5,body:52,thick:20,arm:52,fore:60,fingers:[112,96,80,62],leg:[26,28],speed:3.7,horn:3,
-    palettes:[
-      {name:'Ashen',body:[92,108,92],belly:[200,196,170],wing:[150,140,110],spike:[60,70,60],eye:'200,255,120'},
-      {name:'Dusk',body:[92,62,112],belly:[206,186,206],wing:[140,90,150],spike:[60,40,80],eye:'255,120,220'},
-      {name:'Dune',body:[170,140,100],belly:[236,220,180],wing:[200,160,112],spike:[120,90,60],eye:'255,220,120'}]},
-  serpent:{label:'Sky Serpent',wings:0,segs:34,segL:11,thick:12,speed:2.8,
-    palettes:[
-      {name:'Jade',body:[50,140,110],belly:[230,220,170],wing:[240,230,200],spike:[200,170,90],eye:'180,255,200'},
-      {name:'Azure',body:[60,110,190],belly:[220,230,250],wing:[250,250,255],spike:[230,200,120],eye:'150,210,255'},
-      {name:'Sunscale',body:[200,160,60],belly:[250,232,172],wing:[255,130,70],spike:[180,60,40],eye:'255,230,120'}]}};
+// ===================== Elements: colors, breath and aura =====================
+// tier = the lowest caste that can be born with the element. Breath is a list of particle emitters:
+// [type, color, count per frame, speed, spread, life ms, gravity, size, every Nth frame]
+const ELEMENTS={
+  fire:{name:'Fire',tier:0,body:[150,40,30],belly:[240,186,118],wing:[112,30,22],spike:[44,20,20],glow:[255,150,50],desc:'Breathes roaring flame',breath:[['flame',[255,170,60],5,7,.28,650,-.05,5]]},
+  water:{name:'Water',tier:0,body:[40,90,150],belly:[200,226,240],wing:[60,130,170],spike:[30,60,110],glow:[80,180,255],desc:'Fires a crushing torrent',breath:[['jet',[120,200,255],6,9,.18,700,.14,2.6],['orb',[160,220,255],1,6,.3,500,0,4]]},
+  earth:{name:'Earth',tier:0,body:[110,86,56],belly:[200,180,140],wing:[120,96,62],spike:[70,54,36],glow:[220,170,90],desc:'Hurls a storm of stones',breath:[['rock',[120,96,64],2,7,.3,900,.22,4],['smoke',[110,90,70],1,4,.4,900,-.02,10]]},
+  wind:{name:'Wind',tier:0,body:[140,170,170],belly:[230,240,236],wing:[190,220,214],spike:[100,130,130],glow:[200,255,240],desc:'Exhales a cutting gale',breath:[['gust',[230,250,250],2,9,.25,600,0,14]]},
+  nature:{name:'Nature',tier:0,body:[62,110,58],belly:[226,218,186],wing:[120,170,80],spike:[60,90,40],glow:[150,255,120],desc:'Breathes a whirl of leaves and spores',breath:[['leaf',[120,220,90],4,6,.4,1100,.02,3.5],['orb',[200,255,150],1,5,.4,600,0,3]]},
+  ice:{name:'Ice',tier:0,body:[150,190,220],belly:[235,245,255],wing:[180,220,240],spike:[100,140,180],glow:[180,240,255],desc:'Freezes the air with frost shards',breath:[['shard',[200,240,255],4,9,.2,650,.03,6],['smoke',[220,240,255],1,4,.35,900,-.01,10]]},
+  lightning:{name:'Lightning',tier:0,body:[60,60,110],belly:[210,210,240],wing:[90,90,160],spike:[240,220,90],glow:[255,240,120],desc:'Spits forked lightning',breath:[['bolt',[200,220,255],1,0,.15,140,0,220,2]]},
+  poison:{name:'Poison',tier:0,body:[80,110,50],belly:[200,210,120],wing:[120,90,140],spike:[60,40,80],glow:[170,255,80],desc:'Exhales a choking venom cloud',breath:[['gas',[150,230,80],3,4,.35,1300,-.01,12]]},
+  sand:{name:'Sand',tier:0,body:[180,150,100],belly:[236,220,180],wing:[200,160,112],spike:[120,90,60],glow:[255,220,140],desc:'Blasts a scouring sandstorm',breath:[['jet',[230,200,140],8,8,.25,700,.08,1.6]]},
+  metal:{name:'Metal',tier:0,body:[110,114,124],belly:[200,204,212],wing:[140,140,150],spike:[70,72,80],glow:[220,230,255],desc:'Sprays razor-sharp steel',breath:[['shard',[220,226,240],4,10,.15,600,.05,7]]},
+  magma:{name:'Magma',tier:1,body:[60,28,24],belly:[220,110,40],wing:[160,50,20],spike:[255,120,40],glow:[255,110,30],desc:'Vomits molten rock',breath:[['flame',[255,120,30],3,6,.3,700,-.03,6],['rock',[255,110,30],1,6,.3,900,.2,4]]},
+  storm:{name:'Storm',tier:1,body:[56,66,90],belly:[180,190,210],wing:[80,96,130],spike:[200,210,255],glow:[160,200,255],desc:'Calls down a thunderstorm',breath:[['bolt',[190,210,255],1,0,.25,160,0,240,2],['jet',[150,180,230],3,9,.2,500,.1,1.6]]},
+  crystal:{name:'Crystal',tier:1,body:[120,90,170],belly:[230,220,250],wing:[170,140,220],spike:[220,200,255],glow:[220,170,255],desc:'Shatters the air into prisms',breath:[['shard',[230,190,255],3,8,.25,800,.02,7],['star',[255,255,255],1,4,.4,700,0,4]]},
+  mist:{name:'Mist',tier:1,body:[150,156,168],belly:[226,228,234],wing:[190,194,206],spike:[120,126,140],glow:[220,230,240],desc:'Breathes a blinding fog',breath:[['smoke',[230,234,240],3,4,.4,1300,-.005,14]]},
+  sound:{name:'Sound',tier:1,body:[90,60,120],belly:[210,190,230],wing:[140,100,170],spike:[255,200,120],glow:[255,180,240],desc:'Roars in shattering sound waves',breath:[['ring',[255,180,240],1,6,0,700,0,8,4]]},
+  light:{name:'Light',tier:2,body:[236,226,190],belly:[255,250,236],wing:[255,236,170],spike:[240,200,100],glow:[255,244,200],desc:'Fires a lance of pure light',breath:[['beam',[255,246,210],1,0,0,90,0,7],['star',[255,250,220],2,7,.2,600,0,4]]},
+  shadow:{name:'Shadow',tier:2,body:[30,26,38],belly:[80,64,96],wing:[50,30,66],spike:[140,90,200],glow:[170,100,255],desc:'Exhales living darkness',breath:[['smoke',[40,20,60],3,5,.3,1100,-.01,12],['orb',[170,100,255],1,6,.3,500,0,3]]},
+  arcane:{name:'Arcane',tier:2,body:[70,50,130],belly:[200,180,240],wing:[110,70,190],spike:[120,220,255],glow:[180,120,255],desc:'Weaves spell-glyphs of raw mana',breath:[['orb',[190,130,255],3,7,.2,700,0,4],['glyph',[200,160,255],1,5,0,900,0,10,8]]},
+  lunar:{name:'Lunar',tier:2,body:[160,170,200],belly:[236,240,250],wing:[180,190,220],spike:[220,226,240],glow:[210,225,255],desc:'Breathes cold moonlight',breath:[['beam',[220,230,255],1,0,0,90,0,5],['star',[220,230,255],2,6,.3,800,0,3]]},
+  solar:{name:'Solar',tier:2,body:[220,140,40],belly:[255,226,150],wing:[255,170,60],spike:[255,240,180],glow:[255,200,80],desc:'Exhales the fire of the sun',breath:[['flame',[255,220,100],5,8,.2,650,-.04,6],['beam',[255,220,140],1,0,0,90,0,4]]},
+  spirit:{name:'Spirit',tier:2,body:[120,190,190],belly:[220,255,250],wing:[160,230,230],spike:[200,255,255],glow:[140,255,230],desc:'Releases a stream of wandering souls',breath:[['wisp',[140,255,230],3,6,.35,1100,-.02,3]]},
+  void:{name:'Void',tier:3,body:[16,12,24],belly:[60,40,90],wing:[30,16,50],spike:[160,80,255],glow:[150,70,255],desc:'Tears open a hungry rift',breath:[['void',[150,70,255],1,4,0,1200,0,10,10],['smoke',[20,10,30],2,4,.3,1000,0,10]]},
+  cosmic:{name:'Cosmic',tier:3,body:[30,30,90],belly:[140,120,220],wing:[60,40,140],spike:[255,200,255],glow:[200,150,255],desc:'Breathes a river of stars',breath:[['star',[255,220,255],4,8,.3,900,0,4],['orb',[150,120,255],2,6,.3,800,0,5]]},
+  time:{name:'Time',tier:3,body:[150,120,60],belly:[240,220,170],wing:[200,170,90],spike:[255,230,140],glow:[255,220,120],desc:'Unwinds the moment around its foes',breath:[['glyph',[255,220,120],1,4,0,1000,0,12,6],['jet',[255,230,160],4,6,.3,800,.04,1.4]]},
+  gravity:{name:'Gravity',tier:3,body:[50,40,70],belly:[140,120,170],wing:[90,70,120],spike:[200,180,255],glow:[190,160,255],desc:'Crushes the world with gravity waves',breath:[['ring',[190,160,255],1,5,0,800,0,6,5],['rock',[150,130,170],1,5,.3,900,-.05,3]]},
+  chaos:{name:'Chaos',tier:3,body:[120,30,90],belly:[240,140,200],wing:[200,50,120],spike:[255,220,80],glow:[255,80,200],desc:'Unleashes every force at once',breath:[['orb','rainbow',4,8,.4,700,0,4],['bolt',[255,120,220],1,0,.4,140,0,180,3]]},
+  dream:{name:'Dream',tier:3,body:[200,160,220],belly:[255,236,250],wing:[180,200,255],spike:[255,200,240],glow:[255,190,250],desc:'Breathes visions that lull the world to sleep',breath:[['star',[255,200,250],3,6,.4,1000,-.02,4],['wisp',[200,210,255],2,5,.4,1100,-.02,3]]},
+  aether:{name:'Aether',tier:4,body:[226,206,150],belly:[255,250,234],wing:[255,226,150],spike:[255,206,96],glow:[255,240,190],desc:'Divine Radiance — the first light, from which every element was born',
+    breath:[['beam',[255,214,140],1,0,0,90,0,16],['beam',[255,252,236],1,0,0,90,0,6],['star',[255,246,210],2,11,.35,900,0,5],['ring',[255,236,180],1,8,0,600,0,12,6],['orb','rainbow',2,9,.4,800,0,4]]}};
+const ELEMENT_KEYS=Object.keys(ELEMENTS);
+function elementFor(tier){                           // mostly your own caste's elements, sometimes a lower one
+  const own=ELEMENT_KEYS.filter(k=>ELEMENTS[k].tier===tier),low=ELEMENT_KEYS.filter(k=>ELEMENTS[k].tier<tier);
+  return (low.length&&R()<.3?pick(low):pick(own))||'fire';
+}
+
+// ---------- particle effects ----------
+const FX=[];let shake=0;const MAX_FX=1400;
+const rainbow=()=>[[255,90,90],[255,200,80],[120,255,140],[90,200,255],[200,120,255]][Math.floor(R()*5)];
+function emit(type,x,y,a,c,o={}){
+  if(FX.length>MAX_FX)return;
+  const sp=o.v??5,s=a+(R()-.5)*(o.spread??.3)*2,col=c==='rainbow'?rainbow():c;
+  const p={t:type,x,y,vx:Math.cos(s)*sp*(.75+R()*.5),vy:Math.sin(s)*sp*(.75+R()*.5),life:1,max:o.life??600,size:o.size??4,c:col,g:o.g??0,rot:R()*TAU,vr:(R()-.5)*.3,a:s,k:o.k??1};
+  if(type==='bolt'){const L=(o.size??200)*p.k,n=9;p.pts=[];for(let i=0;i<=n;i++){const t=i/n,off=(i&&i<n)?(R()-.5)*30*p.k:0;p.pts.push([x+Math.cos(a)*L*t-Math.sin(a)*off,y+Math.sin(a)*L*t+Math.cos(a)*off])}p.vx=p.vy=0}
+  if(type==='beam'||type==='ring'||type==='glyph'||type==='void'||type==='pillar'){p.vx*=type==='void'||type==='glyph'?1:0;p.vy*=type==='void'||type==='glyph'?1:0}
+  if(type==='wisp')p.trail=[];
+  FX.push(p);return p;
+}
+function breathe(d){
+  if(!d.mouthW)return;const el=ELEMENTS[d.element],k=d.k;
+  const a=d.headAngleW??0;d.breathF=(d.breathF||0)+1;
+  for(const [type,c,n,v,spread,life,g,size,every] of el.breath){
+    if(every&&d.breathF%every)continue;
+    for(let i=0;i<n;i++){const p=emit(type,d.mouthW.x,d.mouthW.y,a,c,{v:v*Math.sqrt(k),spread,life,g,size:size*(type==='bolt'?1:Math.sqrt(k)),k});
+      if(p&&type==='beam'){p.len=(d.king?900:420)*Math.sqrt(k);p.follow=d}}
+  }
+}
+function roarBurst(d){                                // the visible shockwave of a roar
+  const c=ELEMENTS[d.element].glow,h=d.headW||V(d.x,d.y),n=d.king?4:d.tier>=3?2:1;
+  for(let i=0;i<n;i++){const p=emit('ring',h.x,h.y,0,c,{life:900+i*250,size:(16+i*10)*d.k});if(p)p.grow=(d.king?6:2.5)*d.k}
+  if(d.tier>=3){const s=toScreen(h.x,h.y);if(s.x>-200&&s.x<W+200)shake=Math.max(shake,d.king?14:6)}
+  if(d.king){for(let i=0;i<3;i++){const p=emit('pillar',h.x+(i-1)*160*d.k,h.y,0,[255,240,200],{life:1400,size:40*d.k});}}
+}
+function updateFX(dt){
+  const f=dt/16.67;shake*=.9;
+  for(let i=FX.length-1;i>=0;i--){const p=FX[i];
+    p.life-=dt/p.max;if(p.life<=0){FX.splice(i,1);continue}
+    if(p.follow&&p.follow.mouthW){p.x=p.follow.mouthW.x;p.y=p.follow.mouthW.y;p.a=p.follow.headAngleW??p.a}
+    if(p.trail){p.trail.push([p.x,p.y]);if(p.trail.length>8)p.trail.shift();p.vx+=Math.sin(p.life*12+p.rot)*.25}
+    p.x+=p.vx*f;p.y+=p.vy*f;p.vy+=p.g*f;p.vx*=.97;p.vy*=.97;p.rot+=p.vr*f;
+    if(p.t==='flame'||p.t==='gas'||p.t==='smoke'||p.t==='gust')p.size*=1+.03*f;
+  }
+}
+const NORMAL_FX=new Set(['jet','rock','gust','leaf','gas','smoke','void']);
+function drawFX(add){
+  worldTransform(1);ctx.globalCompositeOperation=add?'lighter':'source-over';
+  for(const p of FX){if(NORMAL_FX.has(p.t)===add)continue;const L=p.life,c=p.c;
+    switch(p.t){
+      case 'flame':{const col=L>.7?mix([255,250,220],c,.4):L>.35?c:mix(c,[160,40,20],.6),r=p.size*2;const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);g.addColorStop(0,rgba(col,.6*L));g.addColorStop(1,rgba(col,0));ctx.fillStyle=g;ctx.fillRect(p.x-r,p.y-r,r*2,r*2);break}
+      case 'orb':case 'wisp':{const r=p.size*2.2;if(p.trail){ctx.strokeStyle=rgba(c,.35*L);ctx.lineWidth=p.size;ctx.beginPath();p.trail.forEach((q,j)=>j?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.stroke()}
+        const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);g.addColorStop(0,rgba([255,255,255],.8*L));g.addColorStop(.3,rgba(c,.6*L));g.addColorStop(1,rgba(c,0));ctx.fillStyle=g;ctx.fillRect(p.x-r,p.y-r,r*2,r*2);break}
+      case 'shard':{ctx.strokeStyle=rgba(c,.9*L);ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(p.x-Math.cos(p.rot)*p.size,p.y-Math.sin(p.rot)*p.size);ctx.lineTo(p.x+Math.cos(p.rot)*p.size,p.y+Math.sin(p.rot)*p.size);ctx.stroke();break}
+      case 'bolt':{for(const [w,col,al] of [[7,c,.25],[2.4,c,.8],[1,[255,255,255],1]]){ctx.strokeStyle=rgba(col,al*L);ctx.lineWidth=w;ctx.beginPath();p.pts.forEach((q,j)=>j?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.stroke()}break}
+      case 'beam':{const ex=p.x+Math.cos(p.a)*p.len,ey=p.y+Math.sin(p.a)*p.len;ctx.lineCap='round';
+        for(const [w,al] of [[p.size*2.4,.18],[p.size,.55]]){ctx.strokeStyle=rgba(c,al*L);ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(ex,ey);ctx.stroke()}break}
+      case 'star':{const r=p.size*(1+.4*Math.sin(p.rot*4));ctx.fillStyle=rgba(c,L);ctx.beginPath();ctx.moveTo(p.x,p.y-r*2);ctx.lineTo(p.x+r*.4,p.y-r*.4);ctx.lineTo(p.x+r*2,p.y);ctx.lineTo(p.x+r*.4,p.y+r*.4);ctx.lineTo(p.x,p.y+r*2);ctx.lineTo(p.x-r*.4,p.y+r*.4);ctx.lineTo(p.x-r*2,p.y);ctx.lineTo(p.x-r*.4,p.y-r*.4);ctx.closePath();ctx.fill();break}
+      case 'ring':{const r=p.size+(1-L)*(p.grow?p.grow*60:60);ctx.strokeStyle=rgba(c,.7*L);ctx.lineWidth=3*L+1;ctx.beginPath();ctx.arc(p.x,p.y,r,0,TAU);ctx.stroke();break}
+      case 'glyph':{const r=p.size*2;ctx.strokeStyle=rgba(c,.8*L);ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(p.x,p.y,r,0,TAU);ctx.stroke();ctx.beginPath();ctx.arc(p.x,p.y,r*.6,0,TAU);ctx.stroke();
+        for(let k=0;k<8;k++){const a=p.rot+k*TAU/8;ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*r*.6,p.y+Math.sin(a)*r*.6);ctx.lineTo(p.x+Math.cos(a)*r,p.y+Math.sin(a)*r);ctx.stroke()}break}
+      case 'pillar':{const g=ctx.createLinearGradient(0,p.y-1600,0,p.y);g.addColorStop(0,rgba(c,0));g.addColorStop(.7,rgba(c,.35*L));g.addColorStop(1,rgba(c,.6*L));ctx.fillStyle=g;ctx.fillRect(p.x-p.size*(.5+L*.5),p.y-1600,p.size*(1+L),1600);break}
+      case 'jet':{ctx.fillStyle=rgba(c,.85*L);ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,TAU);ctx.fill();break}
+      case 'rock':{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle=rgba(c,L);ctx.beginPath();ctx.moveTo(-p.size,-p.size*.6);ctx.lineTo(p.size*.8,-p.size);ctx.lineTo(p.size,p.size*.7);ctx.lineTo(-p.size*.6,p.size);ctx.closePath();ctx.fill();ctx.restore();break}
+      case 'gust':{ctx.strokeStyle=rgba(c,.45*L);ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,p.size,p.a-1,p.a+1);ctx.stroke();break}
+      case 'leaf':{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle=rgba(c,L);ctx.beginPath();ctx.ellipse(0,0,p.size,p.size*.45,0,0,TAU);ctx.fill();ctx.restore();break}
+      case 'gas':case 'smoke':{const r=p.size*2;const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);g.addColorStop(0,rgba(c,.35*L));g.addColorStop(1,rgba(c,0));ctx.fillStyle=g;ctx.fillRect(p.x-r,p.y-r,r*2,r*2);break}
+      case 'void':{const r=p.size*(1.5+(1-L)*2);ctx.fillStyle=rgba([4,0,10],.85*L);ctx.beginPath();ctx.arc(p.x,p.y,r,0,TAU);ctx.fill();ctx.strokeStyle=rgba(c,.9*L);ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,r,p.rot,p.rot+5);ctx.stroke();break}
+    }
+  }
+  ctx.globalCompositeOperation='source-over';
+}
+function auraMote(d){                                 // ambient particles around high-caste dragons
+  const el=ELEMENTS[d.element],c=el.glow,b=d.headW||V(d.x,d.y),x=lerp(d.x,b.x,R())+(R()-.5)*60*d.k,y=lerp(d.y,b.y,R())+(R()-.5)*40*d.k;
+  const t=['fire','magma','solar'].includes(d.element)?'flame':['shadow','void'].includes(d.element)?'smoke':['ice','crystal','cosmic','dream','light','aether','lunar'].includes(d.element)?'star':'orb';
+  emit(t,x,y,-Math.PI/2,t==='smoke'?el.body:c,{v:.6,spread:1,life:900+R()*600,g:-.01,size:(t==='star'?1.4:2.4)*Math.sqrt(d.k)});
+}
+
+
+// ===================== Dragons: body types, castes, the King, skeleton rig and painting =====================
+// Each winged dragon is a skeleton rebuilt every frame from a few pose numbers. Its caste (tier) decides
+// size and ornament; its element decides colors, breath and aura.
+const BODIES={
+  drake:{label:'Drake',wings:1,legs:4,neckN:6,neckL:13,tailN:14,tailL:14,body:72,thick:27,arm:46,fore:52,fingers:[104,90,76,60],leg:[30,30],arm2:1,speed:3.1},
+  wyvern:{label:'Wyvern',wings:1,legs:4,neckN:5,neckL:12,tailN:16,tailL:12.5,body:54,thick:21,arm:52,fore:60,fingers:[112,96,80,62],leg:[27,28],arm2:.72,speed:3.6},
+  serpent:{label:'Serpent',wings:0,segs:34,segL:11,thick:12,speed:2.8}};
+const TIERS=[
+  {name:'Common',title:'',scale:[.82,.95]},{name:'Middle',title:'',scale:[.95,1.08]},{name:'High',title:'Lord ',scale:[1.1,1.25]},
+  {name:'Emperor',title:'Emperor ',scale:[1.32,1.5]},{name:'King',title:'',scale:[1.95,1.95]}];
 const SYL=['Ka','Vor','Thra','Zyl','Mor','Ae','Gal','Rhu','Syn','Oth','Dra','Ves','Ul','Ny','Bal','Ix','Cor','Fen','Hal','Sar'];
 const SUF=['ax','yth','ion','ar','ess','or','ith','ul','ex','ira','oth','an'];
 const dragonName=()=>pick(SYL)+pick(SYL).toLowerCase()+pick(SUF);
 
 const DRAGONS=[];let nextDragonId=1;
 function makeDragon(o){
-  const sp=SPECIES[o.species],pal=o.pal||pick(sp.palettes);
-  const d={id:nextDragonId++,alive:true,species:o.species,sp,pal,name:o.name||dragonName(),
+  const tier=o.tier??0,king=!!o.king,body=king?'drake':o.body||(tier>=2&&R()<.25?'serpent':R()<.4?'wyvern':'drake');
+  const sp=BODIES[body],element=king?'aether':o.element||elementFor(tier),el=ELEMENTS[element],[s0,s1]=TIERS[tier].scale;
+  const pal={name:el.name,body:el.body,belly:el.belly,wing:el.wing,spike:el.spike,eye:el.glow.join(',')};
+  const d={id:nextDragonId++,alive:true,body,sp,tier,king,element,pal,name:king?'Aurelion':(o.name||dragonName()),
     x:o.x,y:o.y,vx:o.vx||0,vy:o.vy||0,fx:o.vx<0?-1:1,facing:o.vx<0?-1:1,
-    k:o.k??1,maxK:o.maxK??(.85+R()*.3),born:o.born,lifespan:o.lifespan??(200000+R()*140000),gen:o.gen||1,
+    k:o.k??(s0+R()*(s1-s0)),maxK:o.maxK??(s0+R()*(s1-s0)),born:o.born,lifespan:king?Infinity:o.lifespan??(220000+R()*160000),gen:o.gen||1,
     parent:o.parent||null,children:0,home:null,perch:null,state:'fly',timer:0,target:null,
-    pose:{pitch:0,flap:0,fold:0,legs:0,sit:0,sleep:0,jaw:0,neck:-.35,head:0,breath:0},want:{fold:0,legs:0,sit:0,sleep:0,neck:-.35},
-    look:null,flapSpeed:1,nextEgg:o.born+40000+R()*40000,roarT:0,blink:0,ascend:0,phase:R()*TAU,hover:false};
-  if(o.species==='serpent'){d.seg=[];const a=o.vx<0?0:Math.PI;for(let i=0;i<sp.segs;i++)d.seg.push({x:d.x+Math.cos(a)*i*sp.segL,y:d.y+Math.sin(a)*i*sp.segL})}
+    pose:{pitch:0,flap:0,fold:0,legs:0,sit:0,sleep:0,jaw:0,neck:-.35,head:0},want:{fold:0,legs:0,sit:0,sleep:0,neck:-.35},
+    flapSpeed:1,nextEgg:o.born+40000+R()*40000,roarT:0,breathT:0,blink:0,ascend:0,phase:R()*TAU};
+  if(king)d.maxK=d.k;
+  if(body==='serpent'){d.seg=[];const a=o.vx<0?0:Math.PI;for(let i=0;i<sp.segs;i++)d.seg.push({x:d.x+Math.cos(a)*i*sp.segL,y:d.y+Math.sin(a)*i*sp.segL})}
   DRAGONS.push(d);return d;
 }
-const stageOf=d=>{const a=(performanceNow-d.born)/d.lifespan;return d.k<.55*d.maxK?'Hatchling':d.k<.85*d.maxK?'Juvenile':a>.75?'Elder':'Adult'};
 let performanceNow=0;
-const headScale=d=>1+.55*(1-clamp((d.k-.3)/.6,0,1));
-const elderOf=d=>clamp(((performanceNow-d.born)/d.lifespan-.65)/.35,0,1);
+const stageOf=d=>{if(d.king)return'Sovereign';const a=(performanceNow-d.born)/d.lifespan;return d.k<.55*d.maxK?'Hatchling':d.k<.85*d.maxK?'Juvenile':a>.75?'Elder':'Adult'};
+const headScale=d=>d.king?1:1+.55*(1-clamp((d.k/d.maxK-.3)/.6,0,1));
+const elderOf=d=>d.king?0:clamp(((performanceNow-d.born)/d.lifespan-.65)/.35,0,1);
+const titleOf=d=>d.king?'The Dragon King':`${TIERS[d.tier].title}${d.name}`;
 
 // ---------- pose → skeleton (local frame: facing +x, chest at the origin, y down) ----------
 const V=(x,y)=>({x,y}),rot=(a,l)=>V(Math.cos(a)*l,Math.sin(a)*l),add=(p,q)=>V(p.x+q.x,p.y+q.y);
-function ik(a,b,l1,l2,bend){                         // two-bone limb: hip a, foot b → knee
-  const dx=b.x-a.x,dy=b.y-a.y,d=Math.min(Math.hypot(dx,dy),l1+l2-.01),ang=Math.atan2(dy,dx);
-  const c=Math.acos(clamp((l1*l1+d*d-l2*l2)/(2*l1*d),-1,1));
-  const knee=add(a,rot(ang+bend*c,l1));return{knee,foot:add(a,rot(ang,d))};
+function ik(a,b,l1,l2,bend){const dx=b.x-a.x,dy=b.y-a.y,dd=Math.min(Math.hypot(dx,dy),l1+l2-.01),ang=Math.atan2(dy,dx);
+  const c=Math.acos(clamp((l1*l1+dd*dd-l2*l2)/(2*l1*dd),-1,1));return{knee:add(a,rot(ang+bend*c,l1)),foot:add(a,rot(ang,dd))}}
+function wingRig(sp,C,Pv,alpha,P,far,phase,scale,back){
+  const S=add(add(C,rot(alpha,-10-far*4-back)),rot(alpha-Math.PI/2,sp.thick*.36+far*2));
+  const s=Math.sin(P.flap+far*.25+phase),open=1-P.fold;
+  const ta=alpha+lerp(-1.25,lerp(-2.15,.45,(s+1)/2),open)+back*.004;
+  const E=add(S,rot(ta,sp.arm*scale)),tf=ta-lerp(2.65,.45,open),Wr=add(E,rot(tf,sp.fore*scale*lerp(.75,1,open)));
+  const tips=sp.fingers.map((L,j)=>add(Wr,rot(tf-(.35+j*.4)*lerp(.28,1,open),L*scale*lerp(.42,1,open))));
+  return{far,S,E,W:Wr,tips,B:add(Pv,rot(alpha,12+back*.3)),s};
 }
 function rig(d,now){
   const sp=d.sp,P=d.pose,hs=headScale(d);
-  const sitA=-.55*P.sit,alpha=P.pitch*(1-P.sit)+sitA*(1-P.sleep)+.05*P.sleep-.28*P.legs*(1-P.sit)*(1-P.sleep);
+  const alpha=P.pitch*(1-P.sit)-.55*P.sit*(1-P.sleep)+.05*P.sleep-.28*P.legs*(1-P.sit)*(1-P.sleep);
   const C=V(0,0),Pv=add(C,rot(alpha,-sp.body));
-  // neck: an S-curve from the shoulders to the head
-  const neck=[C];let nb=alpha+P.neck,hd=P.head;
+  const neck=[C];const nb=alpha+P.neck,hd=P.head;
   for(let i=1;i<=sp.neckN;i++){const t=i/sp.neckN,a=lerp(nb,hd,t*t);neck.push(add(neck[i-1],rot(a,sp.neckL*(1-.1*t)*(hs>1.1?.85:1))))}
-  // tail: droops when standing, waves in flight, curls around the body when asleep
-  const tail=[Pv];const wave=reduce?0:1;
-  const droop=lerp(.08,.5,P.legs)-P.sit*.25,curve=lerp(lerp(.015,-.035,P.legs),.2,P.sleep);
-  for(let i=1;i<=sp.tailN;i++){const a=alpha+Math.PI-droop+i*curve+wave*Math.sin(now/520*d.flapSpeed+d.phase-i*.5)*(.03+.012*i)*(1-P.sleep*.8);
+  const tail=[Pv];const droop=lerp(.08,.5,P.legs)-P.sit*.25,curve=lerp(lerp(.015,-.035,P.legs),.2,P.sleep);
+  for(let i=1;i<=sp.tailN;i++){const a=alpha+Math.PI-droop+i*curve+(reduce?0:Math.sin(now/520*d.flapSpeed+d.phase-i*.5)*(.03+.012*i)*(1-P.sleep*.8));
     tail.push(add(tail[i-1],rot(a,sp.tailL*(1-.25*i/sp.tailN))))}
-  // wings
   const wings=[];
-  if(sp.wings)for(const far of [1,0]){
-    const S=add(C,rot(alpha,-10-far*4)),Sx=add(S,rot(alpha-Math.PI/2,sp.thick*.36+far*2));
-    const s=Math.sin(P.flap+far*.25),open=1-P.fold;
-    const ta=alpha+lerp(-1.25,lerp(-2.15,.45,(s+1)/2),open);
-    const E=add(Sx,rot(ta,sp.arm)),tf=ta-lerp(2.65,.45,open),Wr=add(E,rot(tf,sp.fore*lerp(.75,1,open)));
-    const tips=sp.fingers.map((L,j)=>add(Wr,rot(tf-(.35+j*.4)*lerp(.28,1,open),L*lerp(.42,1,open))));
-    const B=add(Pv,rot(alpha,12));wings.push({far,S:Sx,E,W:Wr,tips,B,s});
+  for(const far of [1,0]){wings.push(wingRig(sp,C,Pv,alpha,P,far,0,1,0));if(d.king)wings.push(Object.assign(wingRig(sp,C,Pv,alpha,P,far,.7,.72,26),{second:1}))}
+  // four limbs for every dragon: hind legs at the hips, arms at the chest
+  const legs=[],L1=sp.leg[0],L2=sp.leg[1],gy=d.groundLocal;
+  const joints=[{hip:add(Pv,rot(alpha+Math.PI/2,sp.thick*.32)),hind:1,s:1},{hip:add(C,rot(alpha+Math.PI/2,sp.thick*.36)),hind:0,s:sp.arm2}];
+  for(const j of joints)for(const far of [1,0]){
+    const hip=add(j.hip,V(far?-5:0,far?-2:0)),l1=L1*j.s,l2=L2*j.s;
+    const tuck=add(hip,j.hind?V(-l1*1.15,l1*.55):V(l1*.25,l1*.75));
+    let stand=V(hip.x+(j.hind?6:10)+(far?4:-2),gy);
+    if(j.hind&&P.sit>.01)stand=V(lerp(stand.x,hip.x+14,P.sit),gy);
+    if(!j.hind&&j.s<.9)stand=V(hip.x+l1*.6,hip.y+l1*1.1);            // wyverns hold their small arms against the chest
+    const sleepF=V(hip.x+(j.hind?16:22),gy);
+    let tgt=V(lerp(tuck.x,stand.x,P.legs),lerp(tuck.y,stand.y,P.legs));tgt=V(lerp(tgt.x,sleepF.x,P.sleep),lerp(tgt.y,sleepF.y,P.sleep));
+    const {knee,foot}=ik(hip,tgt,l1,l2,j.hind?-1:1);legs.push({hip,knee,foot,far,hind:j.hind,s:j.s});
   }
-  // legs
-  const legs=[];const L1=sp.leg?sp.leg[0]:0,L2=sp.leg?sp.leg[1]:0,gy=d.groundLocal;
-  if(sp.legs){
-    const joints=[];
-    joints.push({hip:add(Pv,rot(alpha+Math.PI/2,sp.thick*.32)),hind:1});
-    if(sp.legs===4)joints.push({hip:add(C,rot(alpha+Math.PI/2,sp.thick*.36)),hind:0});
-    for(const j of joints)for(const far of [1,0]){
-      const hip=add(j.hip,V(far?-5:0,far?-2:0));
-      const tuck=add(hip,j.hind?V(-L1*1.15,L1*.55):V(-L1*.35,L1*.85));
-      let stand=V(hip.x+(j.hind?6:8)+(far?4:-2),gy);
-      if(j.hind&&P.sit>.01)stand=V(lerp(stand.x,hip.x+14,P.sit),gy);
-      const sleepF=V(hip.x+(j.hind?16:20),gy);
-      let tgt=V(lerp(tuck.x,stand.x,P.legs),lerp(tuck.y,stand.y,P.legs));tgt=V(lerp(tgt.x,sleepF.x,P.sleep),lerp(tgt.y,sleepF.y,P.sleep));
-      const {knee,foot}=ik(hip,tgt,L1,L2,j.hind?-1:1);legs.push({hip,knee,foot,far,hind:j.hind});
-    }
-  }
-  const head=neck[neck.length-1];
-  return{alpha,C,P:Pv,neck,tail,wings,legs,head,headA:hd,hs};
+  return{alpha,C,P:Pv,neck,tail,wings,legs,head:neck[neck.length-1],headA:hd,hs};
 }
 
-// ---------- painting ----------
-function tubePoly(pts,widths){
-  const L=[],Rr=[];
+// ---------- painting helpers ----------
+function tubePoly(pts,widths){const L=[],Rr=[];
   for(let i=0;i<pts.length;i++){const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)],tx=b.x-a.x,ty=b.y-a.y,l=Math.hypot(tx,ty)||1,nx=ty/l,ny=-tx/l,w=widths[i];
-    L.push(V(pts[i].x+nx*w,pts[i].y+ny*w));Rr.push(V(pts[i].x-nx*w,pts[i].y-ny*w))}
-  return{L,R:Rr};
-}
+    L.push(V(pts[i].x+nx*w,pts[i].y+ny*w));Rr.push(V(pts[i].x-nx*w,pts[i].y-ny*w))}return{L,R:Rr}}
 function smooth(pts,move){if(move)ctx.moveTo(pts[0].x,pts[0].y);else ctx.lineTo(pts[0].x,pts[0].y);
   for(let i=1;i<pts.length-1;i++){const m=V((pts[i].x+pts[i+1].x)/2,(pts[i].y+pts[i+1].y)/2);ctx.quadraticCurveTo(pts[i].x,pts[i].y,m.x,m.y)}
   const e=pts[pts.length-1];ctx.lineTo(e.x,e.y)}
 function polyPath(t){ctx.beginPath();smooth(t.L,true);smooth([...t.R].reverse(),false);ctx.closePath()}
-
-function colorsOf(d){                                // day/night lighting, distance and old age all tint the hide
-  const el=elderOf(d),lit=.42+.58*SKY.light,tint=c=>mix(mix(mix(c,[150,150,150],el*.35),[0,0,0],1-lit),SKY.hor,.08);
-  return{body:tint(d.pal.body),belly:tint(d.pal.belly),wing:tint(d.pal.wing),spike:tint(d.pal.spike),dark:tint(shade(d.pal.body,-.55)),light:tint(shade(d.pal.body,.3)),horn:tint([214,200,172]),el};
+const GOLD=[236,190,84];
+function colorsOf(d){
+  const el=elderOf(d),lit=d.king?.8+.2*SKY.light:.42+.58*SKY.light,dull=d.tier===0?.3:d.tier===1?.12:0;
+  const tint=c=>mix(mix(mix(mix(c,[110,104,96],dull),[150,150,150],el*.35),[0,0,0],1-lit),SKY.hor,.08);
+  return{body:tint(d.pal.body),belly:tint(d.pal.belly),wing:tint(d.pal.wing),spike:tint(d.tier>=3?GOLD:d.pal.spike),dark:tint(shade(d.pal.body,-.55)),light:tint(shade(d.pal.body,.3)),
+    horn:tint(d.king?[255,246,220]:d.tier>=3?GOLD:d.tier===2?[236,220,186]:[206,194,170]),gold:tint(GOLD),glow:ELEMENTS[d.element].glow,el};
 }
-function drawWing(w,c,far){
-  const memb=far?shade(c.wing,-.35):c.wing,bone=far?shade(c.dark,-.2):c.dark;
-  const g=ctx.createLinearGradient(w.S.x,w.S.y,w.tips[1].x,w.tips[1].y);g.addColorStop(0,rgb(shade(memb,-.25)));g.addColorStop(1,rgb(shade(memb,.12)));
+function drawWing(w,c,d){
+  const far=w.far,memb=far?shade(c.wing,-.35):c.wing,bone=d.tier>=3?(far?shade(c.gold,-.3):c.gold):(far?shade(c.dark,-.2):c.dark);
+  const g=ctx.createLinearGradient(w.S.x,w.S.y,w.tips[1].x,w.tips[1].y);
+  if(d.king){g.addColorStop(0,rgba(shade(memb,-.05),.92));g.addColorStop(.6,rgba([255,236,190],.85));g.addColorStop(1,rgba(c.glow,.55))}
+  else{g.addColorStop(0,rgb(shade(memb,-.25)));g.addColorStop(1,rgb(shade(memb,.12)))}
   ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(w.S.x,w.S.y);ctx.lineTo(w.E.x,w.E.y);ctx.lineTo(w.W.x,w.W.y);ctx.lineTo(w.tips[0].x,w.tips[0].y);
   for(let j=1;j<w.tips.length;j++){const a=w.tips[j-1],b=w.tips[j],m=V((a.x+b.x)/2,(a.y+b.y)/2);ctx.quadraticCurveTo(lerp(m.x,w.W.x,.28),lerp(m.y,w.W.y,.28),b.x,b.y)}
   const last=w.tips[w.tips.length-1];ctx.quadraticCurveTo(lerp((last.x+w.B.x)/2,w.W.x,.3),lerp((last.y+w.B.y)/2,w.W.y,.3),w.B.x,w.B.y);ctx.closePath();ctx.fill();
-  // veins and finger bones
-  ctx.strokeStyle=rgba(shade(memb,-.4),.5);ctx.lineWidth=.8;
+  if(d.tier>=2){ctx.strokeStyle=rgba(c.glow,d.king?.9:.55);ctx.lineWidth=d.king?2.2:1.4;ctx.beginPath();ctx.moveTo(w.tips[0].x,w.tips[0].y);
+    for(let j=1;j<w.tips.length;j++){const a=w.tips[j-1],b=w.tips[j],m=V((a.x+b.x)/2,(a.y+b.y)/2);ctx.quadraticCurveTo(lerp(m.x,w.W.x,.28),lerp(m.y,w.W.y,.28),b.x,b.y)}ctx.stroke()}
+  ctx.strokeStyle=rgba(shade(memb,-.4),.45);ctx.lineWidth=.8;
   for(const t of w.tips){ctx.beginPath();ctx.moveTo(lerp(w.W.x,t.x,.3),lerp(w.W.y,t.y,.3));ctx.lineTo(lerp(w.S.x,t.x,.55),lerp(w.S.y,t.y,.55));ctx.stroke()}
   ctx.strokeStyle=rgb(bone);ctx.lineCap='round';ctx.lineWidth=4.2;ctx.beginPath();ctx.moveTo(w.S.x,w.S.y);ctx.lineTo(w.E.x,w.E.y);ctx.lineTo(w.W.x,w.W.y);ctx.stroke();
   ctx.lineWidth=2;for(const t of w.tips){ctx.beginPath();ctx.moveTo(w.W.x,w.W.y);ctx.lineTo(t.x,t.y);ctx.stroke()}
-  ctx.fillStyle=rgb(c.horn);ctx.beginPath();ctx.moveTo(w.W.x,w.W.y);ctx.lineTo(w.W.x+4,w.W.y-7);ctx.lineTo(w.W.x+3,w.W.y+1);ctx.fill();   // wing thumb claw
+  ctx.fillStyle=rgb(c.horn);ctx.beginPath();ctx.moveTo(w.W.x,w.W.y);ctx.lineTo(w.W.x+4,w.W.y-7);ctx.lineTo(w.W.x+3,w.W.y+1);ctx.fill();
+  if(d.king&&!w.second){ // radiant feathers trailing from the King's wings
+    ctx.strokeStyle=rgba([255,244,214],.55);ctx.lineWidth=1.4;
+    for(const t of w.tips)for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(t.x,t.y);ctx.quadraticCurveTo(t.x-10-k*4,t.y+8+k*6,t.x-22-k*8,t.y+18+k*10);ctx.stroke()}}
 }
-function drawLeg(l,c,thick,far){
-  const col=far?shade(c.body,-.3):c.body;ctx.lineCap='round';
-  ctx.strokeStyle=rgb(shade(col,-.2));ctx.lineWidth=thick*.42;ctx.beginPath();ctx.moveTo(l.hip.x,l.hip.y);ctx.lineTo(l.knee.x,l.knee.y);ctx.stroke();
-  ctx.strokeStyle=rgb(col);ctx.lineWidth=thick*.34;ctx.beginPath();ctx.moveTo(l.hip.x,l.hip.y);ctx.lineTo(l.knee.x,l.knee.y);ctx.stroke();
-  ctx.lineWidth=thick*.24;ctx.beginPath();ctx.moveTo(l.knee.x,l.knee.y);ctx.lineTo(l.foot.x,l.foot.y);ctx.stroke();
+function drawLeg(l,c,thick,far,d){
+  const col=far?shade(c.body,-.3):c.body,w=thick*(l.hind?1:.92)*l.s;ctx.lineCap='round';
+  ctx.strokeStyle=rgb(shade(col,-.2));ctx.lineWidth=w*.42;ctx.beginPath();ctx.moveTo(l.hip.x,l.hip.y);ctx.lineTo(l.knee.x,l.knee.y);ctx.stroke();
+  ctx.strokeStyle=rgb(col);ctx.lineWidth=w*.34;ctx.beginPath();ctx.moveTo(l.hip.x,l.hip.y);ctx.lineTo(l.knee.x,l.knee.y);ctx.stroke();
+  ctx.lineWidth=w*.24;ctx.beginPath();ctx.moveTo(l.knee.x,l.knee.y);ctx.lineTo(l.foot.x,l.foot.y);ctx.stroke();
+  if(d.tier>=3){ctx.strokeStyle=rgb(c.gold);ctx.lineWidth=2;ctx.beginPath();ctx.arc(lerp(l.knee.x,l.foot.x,.5),lerp(l.knee.y,l.foot.y,.5),w*.14,0,TAU);ctx.stroke()}
   ctx.strokeStyle=rgb(c.horn);ctx.lineWidth=1.6;
   for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(l.foot.x,l.foot.y);ctx.quadraticCurveTo(l.foot.x+6+k*2,l.foot.y-1+k,l.foot.x+9+k*2.5,l.foot.y+3);ctx.stroke()}
 }
 function drawHead(d,r,c,now){
-  const sp=d.sp,P=d.pose,h=r.head;
+  const P=d.pose,h=r.head,tier=d.tier;
   ctx.save();ctx.translate(h.x,h.y);ctx.rotate(r.headA);ctx.scale(r.hs,r.hs);
-  const jaw=P.jaw,horn=sp.horn;
-  // horns (far horn first)
-  for(const far of [1,0]){const hc=far?shade(c.horn,-.35):c.horn,sz=horn===2?1.35:horn===3?.85:1;
-    ctx.fillStyle=rgb(hc);ctx.beginPath();ctx.moveTo(6,-8-far*2);ctx.bezierCurveTo(-6*sz,-18*sz,-18*sz,-24*sz,-32*sz,-22*sz-far*4);ctx.bezierCurveTo(-18*sz,-18*sz,-6,-12,2,-4);ctx.closePath();ctx.fill();
-    if(horn===2){ctx.beginPath();ctx.moveTo(14,-9);ctx.quadraticCurveTo(10,-20,4,-26-far*3);ctx.quadraticCurveTo(12,-18,18,-8);ctx.fill()}
-    if(sp===SPECIES.drake&&!far){ctx.beginPath();ctx.moveTo(10,-10);ctx.quadraticCurveTo(4,-22,-6,-30);ctx.quadraticCurveTo(6,-20,14,-9);ctx.fill()}}
-  // frill spikes behind the jaw
+  const jaw=P.jaw,sz=[.8,1,1.2,1.4,1.8][tier];
+  // mane for emperors and the King
+  if(tier>=3){ctx.strokeStyle=rgba(d.king?[255,244,214]:c.belly,.85);ctx.lineCap='round';
+    for(let k=0;k<(d.king?11:7);k++){const w=reduce?0:Math.sin(now/420+k+d.phase)*4,y0=-6+k*1.6;ctx.lineWidth=d.king?1.8:1.4;
+      ctx.beginPath();ctx.moveTo(-2,y0);ctx.quadraticCurveTo(-20,y0-6+w,-38-k*2,y0-2+w*2);ctx.stroke()}}
+  // horns: bigger and richer with caste
+  const hornCol=far=>far?shade(c.horn,-.35):c.horn;
+  for(const far of [1,0]){
+    const g=ctx.createLinearGradient(6,-8,-32*sz,-22*sz);g.addColorStop(0,rgb(shade(hornCol(far),-.2)));g.addColorStop(1,rgb(tier>=2?shade(GOLD,far?-.2:.2):hornCol(far)));
+    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(6,-8-far*2);ctx.bezierCurveTo(-6*sz,-18*sz,-18*sz,-24*sz,-32*sz,-22*sz-far*4);ctx.bezierCurveTo(-18*sz,-18*sz,-6,-12,2,-4);ctx.closePath();ctx.fill();
+    if(tier>=1&&!far){ctx.beginPath();ctx.moveTo(10,-10);ctx.quadraticCurveTo(4,-20*sz,-6*sz,-28*sz);ctx.quadraticCurveTo(6,-20,14,-9);ctx.fill()}}
+  // crown spikes for emperors (5) and the King (7)
+  if(tier>=3){const n=d.king?7:5;ctx.fillStyle=rgb(d.king?[255,236,170]:c.gold);
+    for(let k=0;k<n;k++){const a=-Math.PI/2-.9+k*1.8/(n-1),bx=4+Math.cos(a)*6,by=-10+Math.sin(a)*3,L=(d.king?16:11)*(1-Math.abs(k-(n-1)/2)/n*.8);
+      ctx.beginPath();ctx.moveTo(bx-2,by);ctx.lineTo(bx+Math.cos(a)*L*.3,by+Math.sin(a)*L);ctx.lineTo(bx+2,by);ctx.fill()}}
   ctx.fillStyle=rgb(c.spike);for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(4-k*2,2+k*3);ctx.lineTo(-12-k*3,4+k*5);ctx.lineTo(2-k*2,6+k*3);ctx.fill()}
-  // lower jaw (opens when roaring or breathing fire)
   ctx.save();ctx.translate(10,4);ctx.rotate(jaw*.6);
   ctx.fillStyle=rgb(shade(c.body,-.15));ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(30,0);ctx.quadraticCurveTo(31,3,28,5);ctx.lineTo(2,8);ctx.closePath();ctx.fill();
   ctx.fillStyle=rgb(c.belly);ctx.beginPath();ctx.moveTo(2,6);ctx.lineTo(28,4);ctx.lineTo(27,5.5);ctx.lineTo(3,8);ctx.fill();
   if(jaw>.05){ctx.fillStyle='#f4ecdc';for(let x=8;x<28;x+=4){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+1.2,-3);ctx.lineTo(x+2.4,0);ctx.fill()}}
   ctx.restore();
-  if(jaw>.05){ctx.fillStyle='#3a0c0c';ctx.beginPath();ctx.moveTo(10,4);ctx.lineTo(42,2);ctx.lineTo(40,4+jaw*16);ctx.lineTo(12,6+jaw*6);ctx.fill()}
-  // skull and snout
+  if(jaw>.05){ctx.fillStyle=d.king?'#fff2c8':'#3a0c0c';ctx.beginPath();ctx.moveTo(10,4);ctx.lineTo(42,2);ctx.lineTo(40,4+jaw*16);ctx.lineTo(12,6+jaw*6);ctx.fill()}
   const hg=ctx.createLinearGradient(0,-12,0,8);hg.addColorStop(0,rgb(c.light));hg.addColorStop(.55,rgb(c.body));hg.addColorStop(1,rgb(c.dark));
   ctx.fillStyle=hg;ctx.beginPath();ctx.moveTo(-2,-8);ctx.quadraticCurveTo(6,-14,14,-11);ctx.quadraticCurveTo(20,-10,24,-7);
   ctx.quadraticCurveTo(34,-6,42,-4);ctx.quadraticCurveTo(46,-2,44,1);ctx.lineTo(40,3);ctx.lineTo(12,5);ctx.quadraticCurveTo(2,9,-3,6);ctx.closePath();ctx.fill();
-  // brow ridge, nostril, upper teeth
-  ctx.strokeStyle=rgb(c.dark);ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(12,-11);ctx.quadraticCurveTo(18,-11,24,-7.5);ctx.stroke();
+  ctx.strokeStyle=rgb(tier>=3?c.gold:c.dark);ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(12,-11);ctx.quadraticCurveTo(18,-11,24,-7.5);ctx.stroke();
+  if(tier>=2){ctx.strokeStyle=rgba(c.glow,.8);ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(2,-7);ctx.quadraticCurveTo(14,-9,30,-5);ctx.stroke()}   // glowing brow rune
   ctx.fillStyle='#120a0a';ctx.beginPath();ctx.ellipse(40,-2.5,2,1.1,-.2,0,TAU);ctx.fill();
   ctx.fillStyle='#f4ecdc';for(let x=16;x<40;x+=5){ctx.beginPath();ctx.moveTo(x,3.6);ctx.lineTo(x+1.2,6.6+(x===26?2:0));ctx.lineTo(x+2.4,3.4);ctx.fill()}
-  // eye socket (the glow is added in the light pass)
   ctx.fillStyle='#0a0608';ctx.beginPath();ctx.ellipse(20,-6.2,3.4,2,-.15,0,TAU);ctx.fill();
-  // elder's beard
+  if(d.king){ctx.fillStyle='rgb(255,236,170)';ctx.beginPath();ctx.moveTo(4,-2);ctx.lineTo(8,-6);ctx.lineTo(12,-2);ctx.lineTo(8,2);ctx.closePath();ctx.fill()}  // forehead jewel
   if(c.el>0){ctx.strokeStyle=`rgba(225,225,230,${.8*c.el})`;ctx.lineWidth=1;for(let k=0;k<5;k++){const w=reduce?0:Math.sin(now/500+k)*2;ctx.beginPath();ctx.moveTo(14+k*3,8);ctx.quadraticCurveTo(10+k*2+w,16+k,4+k*2+w*1.5,22+k*2);ctx.stroke()}}
   ctx.restore();
 }
 
-// local rig point → world point (the dragon is drawn mirrored when it faces left)
 const toW=(d,p)=>V(d.x+p.x*d.fx*d.k,d.y+p.y*d.k);
 const headPt=(r,lx,ly)=>add(add(r.head,rot(r.headA,lx*r.hs)),rot(r.headA+Math.PI/2,ly*r.hs));
 const alphaOf=d=>(d.ascend?Math.max(0,1-d.ascend*1.1):1)*(d.arrive!==undefined?Math.min(1,d.arrive):1);
 
 function drawDragon(d,now){
-  if(d.species==='serpent')return drawSerpent(d,now);
+  if(d.body==='serpent')return drawSerpent(d,now);
   const sp=d.sp,r=rig(d,now),c=colorsOf(d);d.rig=r;
-  d.eyeW=toW(d,headPt(r,20,-6.2));d.mouthW=toW(d,headPt(r,44,1));d.headW=toW(d,headPt(r,20,0));
+  d.eyeW=toW(d,headPt(r,20,-6.2));d.mouthW=toW(d,headPt(r,44,3));d.headW=toW(d,headPt(r,20,0));
+  d.headAngleW=d.fx<0?Math.PI-r.headA:r.headA;
   worldTransform(1);ctx.translate(d.x,d.y);ctx.scale(d.fx*d.k,d.k);ctx.globalAlpha=alphaOf(d);
-  const fw=r.wings.find(w=>w.far),nw=r.wings.find(w=>!w.far);
-  if(fw)drawWing(fw,c,1);
-  r.legs.filter(l=>l.far).forEach(l=>drawLeg(l,c,sp.thick,1));
-  // one continuous body: tail tip → hips → chest → neck
+  r.wings.filter(w=>w.far).sort((a,b)=>(b.second?1:0)-(a.second?1:0)).forEach(w=>drawWing(w,c,d));
+  r.legs.filter(l=>l.far).forEach(l=>drawLeg(l,c,sp.thick,1,d));
   const tail=r.tail.slice().reverse(),N=tail.length;
   const mid=[.33,.66].map(t=>V(lerp(r.P.x,r.C.x,t),lerp(r.P.y,r.C.y,t)-sp.thick*.06*Math.sin(t*Math.PI)));
   const pts=[...tail,...mid,...r.neck];
   const widths=[...tail.map((_,i)=>sp.thick*.5*Math.pow((i+1)/N,.9)+.8),sp.thick*.58,sp.thick*.6,...r.neck.map((_,i)=>sp.thick*(.52-.27*i/(r.neck.length-1)))];
-  const t=tubePoly(pts,widths);
+  const t=tubePoly(pts,widths),nIdx=pts.length,b0=Math.floor(N*.55);
   ctx.fillStyle=rgb(c.body);polyPath(t);ctx.fill();
-  // lit back and pale belly plates
-  const nIdx=pts.length,b0=Math.floor(N*.55);
   const inner=pts.map((p,i)=>V(lerp(p.x,t.R[i].x,.35),lerp(p.y,t.R[i].y,.35))),upper=pts.map((p,i)=>V(lerp(p.x,t.L[i].x,.3),lerp(p.y,t.L[i].y,.3)));
   ctx.fillStyle=rgba(c.light,.35);ctx.beginPath();smooth(t.L.slice(2),true);smooth(upper.slice(2).reverse(),false);ctx.closePath();ctx.fill();
   ctx.fillStyle=rgb(c.belly);ctx.beginPath();smooth(t.R.slice(b0),true);smooth(inner.slice(b0).reverse(),false);ctx.closePath();ctx.fill();
-  ctx.strokeStyle=rgba(shade(c.belly,-.45),.55);ctx.lineWidth=.9;
-  for(let i=b0;i<nIdx;i++){ctx.beginPath();ctx.moveTo(t.R[i].x,t.R[i].y);ctx.lineTo(inner[i].x,inner[i].y);ctx.stroke()}
-  // scales
+  ctx.strokeStyle=rgba(shade(c.belly,-.45),.55);ctx.lineWidth=.9;for(let i=b0;i<nIdx;i++){ctx.beginPath();ctx.moveTo(t.R[i].x,t.R[i].y);ctx.lineTo(inner[i].x,inner[i].y);ctx.stroke()}
   ctx.strokeStyle=rgba(c.dark,.35);ctx.lineWidth=.7;
   for(let i=1;i<nIdx-1;i++){const p=pts[i],w=widths[i],a=Math.atan2(pts[i+1].y-pts[i-1].y,pts[i+1].x-pts[i-1].x);
     for(const o of [-.15,.25]){const q=V(lerp(p.x,t.L[i].x,o+.15),lerp(p.y,t.L[i].y,o+.15));ctx.beginPath();ctx.arc(q.x,q.y,w*.28,a+Math.PI-1.1,a+Math.PI+1.1);ctx.stroke()}}
-  // dorsal spikes
+  // gold bands for the high castes, filigree for the King
+  if(d.tier>=2){ctx.strokeStyle=rgb(c.gold);ctx.lineWidth=d.tier>=3?2.2:1.5;for(let i=4;i<nIdx-3;i+=d.tier>=3?3:5){ctx.beginPath();ctx.moveTo(t.L[i].x,t.L[i].y);ctx.lineTo(t.R[i].x,t.R[i].y);ctx.stroke()}}
+  if(d.king){ctx.strokeStyle='rgba(255,236,170,.9)';ctx.lineWidth=1.2;ctx.beginPath();smooth(upper.slice(3),true);ctx.stroke();ctx.beginPath();smooth(inner.slice(b0),true);ctx.stroke()}
   ctx.fillStyle=rgb(c.spike);
-  for(let i=1;i<nIdx-2;i+=2){const p=t.L[i],q=pts[i],a=Math.atan2(pts[i+1].y-pts[i-1].y,pts[i+1].x-pts[i-1].x),h=widths[i]*.75+1.5;
+  for(let i=1;i<nIdx-2;i+=2){const p=t.L[i],q=pts[i],a=Math.atan2(pts[i+1].y-pts[i-1].y,pts[i+1].x-pts[i-1].x),h=widths[i]*(d.tier>=3?.95:.75)+1.5;
     const tip=V(p.x+(p.x-q.x)/widths[i]*h-Math.cos(a)*h*.5,p.y+(p.y-q.y)/widths[i]*h-Math.sin(a)*h*.5);
     ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*h*.45,p.y+Math.sin(a)*h*.45);ctx.lineTo(tip.x,tip.y);ctx.lineTo(p.x-Math.cos(a)*h*.35,p.y-Math.sin(a)*h*.35);ctx.fill()}
-  // tail blade
   const tp=tail[0],tq=tail[1],ta=Math.atan2(tp.y-tq.y,tp.x-tq.x);
   ctx.save();ctx.translate(tp.x,tp.y);ctx.rotate(ta);ctx.fillStyle=rgb(c.spike);ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(-4,-6);ctx.lineTo(-2,0);ctx.lineTo(-4,6);ctx.closePath();ctx.fill();ctx.restore();
   ctx.strokeStyle=rgba([0,0,0],.45);ctx.lineWidth=1.1;polyPath(t);ctx.stroke();
-  r.legs.filter(l=>!l.far).forEach(l=>drawLeg(l,c,sp.thick,0));
+  d.tailW=toW(d,tp);
+  r.legs.filter(l=>!l.far).forEach(l=>drawLeg(l,c,sp.thick,0,d));
   drawHead(d,r,c,now);
-  if(nw)drawWing(nw,c,0);
+  r.wings.filter(w=>!w.far).sort((a,b)=>(b.second?1:0)-(a.second?1:0)).forEach(w=>drawWing(w,c,d));
   ctx.globalAlpha=1;
 }
 
@@ -609,183 +797,177 @@ function drawSerpent(d,now){
   const sp=d.sp,c=colorsOf(d),k=d.k,seg=d.seg,n=seg.length;
   worldTransform(1);ctx.globalAlpha=alphaOf(d);
   const widths=seg.map((_,i)=>{const t=i/(n-1);return sp.thick*k*(t<.15?.75+t*1.6:1-Math.pow((t-.15)/.85,1.4)*.85)});
-  const t=tubePoly(seg,widths);
-  // mane along the back
-  ctx.lineCap='round';
+  const t=tubePoly(seg,widths);ctx.lineCap='round';
   for(let i=1;i<n*.7;i+=2){const p=seg[i],q=seg[i+1],a=Math.atan2(q.y-p.y,q.x-p.x),up=t.L[i].y<t.R[i].y?t.L[i]:t.R[i],w=reduce?0:Math.sin(now/380-i*.5+d.phase);
-    ctx.strokeStyle=rgba(c.wing,.75);ctx.lineWidth=1.6*k;ctx.beginPath();ctx.moveTo(up.x,up.y);
-    ctx.quadraticCurveTo(up.x+Math.cos(a)*10*k,up.y-8*k+w*3*k,up.x+Math.cos(a)*20*k,up.y-4*k+w*6*k);ctx.stroke()}
+    ctx.strokeStyle=rgba(d.tier>=3?c.belly:c.wing,.75);ctx.lineWidth=1.6*k;ctx.beginPath();ctx.moveTo(up.x,up.y);ctx.quadraticCurveTo(up.x+Math.cos(a)*10*k,up.y-8*k+w*3*k,up.x+Math.cos(a)*20*k,up.y-4*k+w*6*k);ctx.stroke()}
   ctx.fillStyle=rgb(c.body);polyPath(t);ctx.fill();
-  // belly on whichever side faces down
-  ctx.fillStyle=rgb(c.belly);ctx.beginPath();
   const low=seg.map((p,i)=>t.L[i].y>t.R[i].y?t.L[i]:t.R[i]),inn=seg.map((p,i)=>V(lerp(p.x,low[i].x,.3),lerp(p.y,low[i].y,.3)));
-  smooth(low,true);smooth(inn.slice().reverse(),false);ctx.closePath();ctx.fill();
+  ctx.fillStyle=rgb(c.belly);ctx.beginPath();smooth(low,true);smooth(inn.slice().reverse(),false);ctx.closePath();ctx.fill();
   ctx.strokeStyle=rgba(shade(c.belly,-.45),.5);ctx.lineWidth=.8;for(let i=2;i<n-1;i++){ctx.beginPath();ctx.moveTo(low[i].x,low[i].y);ctx.lineTo(inn[i].x,inn[i].y);ctx.stroke()}
-  ctx.strokeStyle=rgba(c.dark,.35);ctx.lineWidth=.7;
-  for(let i=2;i<n-1;i++){const p=seg[i],a=Math.atan2(seg[i-1].y-p.y,seg[i-1].x-p.x);ctx.beginPath();ctx.arc(p.x,p.y,widths[i]*.4,a+Math.PI-1,a+Math.PI+1);ctx.stroke()}
-  // little legs
-  for(const i of [7,19]){const p=seg[i],l=low[i],sw=reduce?0:Math.sin(now/300+i)*3*k;ctx.strokeStyle=rgb(shade(c.body,-.15));ctx.lineWidth=3*k;
+  if(d.tier>=2){ctx.strokeStyle=rgb(c.gold);ctx.lineWidth=1.6*k;for(let i=4;i<n-3;i+=d.tier>=3?3:5){ctx.beginPath();ctx.moveTo(t.L[i].x,t.L[i].y);ctx.lineTo(t.R[i].x,t.R[i].y);ctx.stroke()}}
+  for(const i of [7,19]){const l=low[i],sw=reduce?0:Math.sin(now/300+i)*3*k;ctx.strokeStyle=rgb(shade(c.body,-.15));ctx.lineWidth=3*k;
     ctx.beginPath();ctx.moveTo(l.x,l.y);ctx.lineTo(l.x+sw,l.y+10*k);ctx.stroke();ctx.strokeStyle=rgb(c.horn);ctx.lineWidth=1.1;
     for(let q=0;q<3;q++){ctx.beginPath();ctx.moveTo(l.x+sw,l.y+10*k);ctx.lineTo(l.x+sw+(q-1)*3*k,l.y+14*k);ctx.stroke()}}
   ctx.strokeStyle=rgba([0,0,0],.4);ctx.lineWidth=1;polyPath(t);ctx.stroke();
-  // tail plume
-  const e=seg[n-1],e2=seg[n-2],ea=Math.atan2(e.y-e2.y,e.x-e2.x);ctx.strokeStyle=rgba(c.wing,.85);ctx.lineWidth=1.4*k;
+  const e=seg[n-1],e2=seg[n-2],ea=Math.atan2(e.y-e2.y,e.x-e2.x);ctx.strokeStyle=rgba(c.wing,.85);ctx.lineWidth=1.4*k;d.tailW=e;
   for(let j=-3;j<=3;j++){const w=reduce?0:Math.sin(now/300+j)*.2;ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.quadraticCurveTo(e.x+Math.cos(ea+j*.12+w)*14*k,e.y+Math.sin(ea+j*.12+w)*14*k-4*k,e.x+Math.cos(ea+j*.16+w)*30*k,e.y+Math.sin(ea+j*.16+w)*30*k)}ctx.stroke();
-  // head, kept upright
   const h=seg[0],a=Math.atan2(h.y-seg[1].y,h.x-seg[1].x),up=Math.cos(a)<0?-1:1,hs=headScale(d)*.62;
   ctx.save();ctx.translate(h.x,h.y);ctx.rotate(a);ctx.scale(k,k*up);
-  // whiskers
   ctx.strokeStyle=rgba(c.wing,.9);ctx.lineWidth=1.2;for(const s of [-1,1]){const w=reduce?0:Math.sin(now/400+s+d.phase)*8;ctx.beginPath();ctx.moveTo(26*hs,(2+s*2)*hs);ctx.bezierCurveTo(34*hs,(12+w)*hs,0,(26+w)*hs,-30*hs,(30+w*1.5)*hs);ctx.stroke()}
   drawHead(d,{head:V(0,0),headA:0,hs},c,now);
   ctx.restore();
   const tw=(lx,ly)=>{const ca=Math.cos(a),sa=Math.sin(a),X=lx*hs*k,Y=ly*hs*k*up;return V(h.x+X*ca-Y*sa,h.y+X*sa+Y*ca)};
-  d.eyeW=tw(20,-6.2);d.mouthW=tw(44,1);d.headW=tw(20,0);d.serpA=a;
+  d.eyeW=tw(20,-6.2);d.mouthW=tw(44,3);d.headW=tw(20,0);d.headAngleW=a;
   ctx.globalAlpha=1;
 }
 
-// ---------- fire breath ----------
-const FIRE=[];
-function breathe(d){
-  if(!d.mouthW)return;
-  const a=d.species==='serpent'?d.serpA:(d.fx<0?Math.PI-(d.rig?d.rig.headA:0):(d.rig?d.rig.headA:0));
-  for(let i=0;i<5;i++){const s=a+(R()-.5)*.28,v=(5+R()*4)*Math.sqrt(d.k);FIRE.push({x:d.mouthW.x,y:d.mouthW.y,vx:Math.cos(s)*v,vy:Math.sin(s)*v,life:1,size:(4+R()*5)*d.k})}
-}
-function updateFire(dt){for(let i=FIRE.length-1;i>=0;i--){const f=FIRE[i];f.x+=f.vx;f.y+=f.vy;f.vx*=.95;f.vy=f.vy*.95-.05;f.life-=dt/650;f.size*=1.025;if(f.life<=0)FIRE.splice(i,1)}}
-function drawFire(){
-  worldTransform(1);ctx.globalCompositeOperation='lighter';
-  for(const f of FIRE){const t=f.life,c=t>.7?[255,240,190]:t>.4?[255,150,40]:[200,60,20];
-    const g=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.size*2);g.addColorStop(0,rgba(c,.55*t));g.addColorStop(1,rgba(c,0));ctx.fillStyle=g;ctx.fillRect(f.x-f.size*2,f.y-f.size*2,f.size*4,f.size*4)}
-  ctx.globalCompositeOperation='source-over';
-}
-// ---------- light pass: glowing eyes ----------
-function drawEyes(d,now){
-  if(!d.eyeW)return;const sleeping=d.pose.sleep>.6,open=(1-Math.sin(d.blink*Math.PI))*(sleeping?0:1);if(open<.05)return;
-  const r=(7+6*SKY.night)*d.k*headScale(d)*(1+d.pose.jaw*.5),p=d.eyeW;
-  const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);g.addColorStop(0,`rgba(${d.pal.eye},${.75*open})`);g.addColorStop(.35,`rgba(${d.pal.eye},${.25*open})`);g.addColorStop(1,`rgba(${d.pal.eye},0)`);
+// ---------- light pass: eyes, halos, the King's radiance ----------
+function drawLight(d,now){
+  if(!d.eyeW)return;const glow=ELEMENTS[d.element].glow,a=alphaOf(d);
+  const sleeping=d.pose.sleep>.6,open=(1-Math.sin(d.blink*Math.PI))*(sleeping?0:1);
+  // halo rings behind the head: thin for emperors, a whole sun for the King
+  if(d.tier>=3&&d.headW){const h=d.headW,R0=(d.king?62:26)*d.k*.5;
+    ctx.strokeStyle=rgba(d.king?[255,236,170]:glow,.55*a);ctx.lineWidth=d.king?3:1.6;ctx.beginPath();ctx.arc(h.x-d.fx*6*d.k,h.y-6*d.k,R0,0,TAU);ctx.stroke();
+    if(d.king){const cx=h.x-d.fx*6*d.k,cy=h.y-6*d.k,rot2=reduce?0:now/4000;
+      const g=ctx.createRadialGradient(cx,cy,0,cx,cy,R0*2.4);g.addColorStop(0,`rgba(255,244,210,${.4*a})`);g.addColorStop(1,'rgba(255,244,210,0)');ctx.fillStyle=g;ctx.fillRect(cx-R0*2.4,cy-R0*2.4,R0*4.8,R0*4.8);
+      ctx.lineWidth=1.4;ctx.strokeStyle=`rgba(255,226,150,${.7*a})`;ctx.beginPath();ctx.arc(cx,cy,R0*1.35,0,TAU);ctx.stroke();
+      for(let k=0;k<24;k++){const an=rot2+k*TAU/24,r1=R0*1.35,r2=R0*(k%2?1.55:1.8);ctx.beginPath();ctx.moveTo(cx+Math.cos(an)*r1,cy+Math.sin(an)*r1);ctx.lineTo(cx+Math.cos(an)*r2,cy+Math.sin(an)*r2);ctx.stroke()}
+      for(let k=0;k<12;k++){const an=-rot2*1.6+k*TAU/12,rr=R0*1.12;ctx.fillStyle=`rgba(255,240,200,${.8*a})`;ctx.beginPath();ctx.arc(cx+Math.cos(an)*rr,cy+Math.sin(an)*rr,1.6,0,TAU);ctx.fill()}}}
+  if(d.king){const g=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,260*d.k*.5);g.addColorStop(0,`rgba(255,236,190,${.25*a})`);g.addColorStop(1,'rgba(255,236,190,0)');ctx.fillStyle=g;ctx.fillRect(d.x-130*d.k,d.y-130*d.k,260*d.k,260*d.k)}
+  if(open<.05)return;
+  const r=(7+6*SKY.night)*d.k*headScale(d)*(1+d.pose.jaw*.5)*(d.king?1.6:1),p=d.eyeW;
+  const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);g.addColorStop(0,rgba(glow,.75*open*a));g.addColorStop(.35,rgba(glow,.25*open*a));g.addColorStop(1,rgba(glow,0));
   ctx.fillStyle=g;ctx.fillRect(p.x-r,p.y-r,r*2,r*2);
-  ctx.fillStyle=`rgba(255,250,230,${open})`;ctx.beginPath();ctx.arc(p.x,p.y,1.4*d.k*headScale(d),0,TAU);ctx.fill();
+  ctx.fillStyle=`rgba(255,250,230,${open*a})`;ctx.beginPath();ctx.arc(p.x,p.y,1.4*d.k*headScale(d),0,TAU);ctx.fill();
 }
 
 
-// ===================== Behaviour and life cycle =====================
-// States: fly → approach → land → perch ⇄ brood / sleep → takeoff → fly … and finally ascend.
-// Hatchlings follow their parent (in the air and on the perch) until they are big enough to live alone.
-const CAP=()=>W<700?12:20;
-const EVENTS=[];const logEvent=(text)=>{EVENTS.unshift({text,t:performanceNow});if(EVENTS.length>5)EVENTS.pop()};
-const isAir=s=>s==='fly'||s==='approach'||s==='takeoff'||s==='ascend';
-const ageOf=d=>(performanceNow-d.born)/d.lifespan;
+// ===================== Behaviour, castes and life cycle =====================
+// Rules of the castes: a dragon may live in its own zone or any lower one, never in a higher one.
+// The King lives on the Throne of Heaven, patrols the whole valley now and then, and everyone bows as he passes.
+const CAP=()=>W<700?14:26;
+const EVENTS=[];const logEvent=text=>{EVENTS.unshift({text,t:performanceNow});if(EVENTS.length>5)EVENTS.pop()};
+const isAir=s=>s==='fly'||s==='approach'||s==='takeoff'||s==='ascend'||s==='patrol';
+const ageOf=d=>d.king?.4:(performanceNow-d.born)/d.lifespan;
 const adultish=d=>d.k>=.85*d.maxK;
+let KING=null;
 
 function standHeight(d){const sp=d.sp,P=d.pose;if(!sp.legs)return 40*d.k;
   const legH=(sp.leg[0]+sp.leg[1])*.82+sp.thick*.3;return lerp(lerp(legH,legH*.88,P.sit),sp.thick*.48,P.sleep)*d.k}
-
 function perchScore(d,p){
   if(p.holder&&p.holder!==d)return-1;
-  let s=1+R()*.6;const sp=d.species;
-  if(sp==='fire')s+=p.volcano?3:-.5;else if(p.volcano)s-=.8;
-  if(sp==='wyvern')s+=p.type==='ruin'?1.6:p.type==='peak'?1.2:0;
-  if(sp==='drake')s+=p.type==='ledge'?1.4:p.type==='peak'?1:0;
-  if(sp==='serpent')s+=p.type==='hill'?1.6:p.type==='peak'?1.2:-1;
+  if(p.king)return d.king?100:-1;
+  if(p.tier>d.tier)return-1;                         // never above your caste
+  let s=1+R()*.6-(d.tier-p.tier)*1.2;if(p.tier===d.tier)s+=2.5;
+  if(d.element==='fire'||d.element==='magma')s+=p.volcano?2:0;
+  if(d.body==='wyvern')s+=p.type==='ruin'||p.type==='island'?1:0;
+  if(d.body==='serpent')s+=p.type==='hill'||p.type==='peak'||p.type==='island'?1.2:-.5;
   if(d.home&&p===d.home.perch)s+=SKY.night>.5||d.home.eggs.length?5:1.2;
-  s-=Math.abs(p.x-d.x)/2500;
-  return s;
+  s-=Math.abs(p.x-d.x)/3000;return s;
 }
-function choosePerch(d){
-  let best=null,bs=-1;for(const p of PERCHES){const s=perchScore(d,p);if(s>bs){bs=s;best=p}}
-  return best;
-}
+function choosePerch(d){let best=null,bs=0;for(const p of PERCHES){const s=perchScore(d,p);if(s>bs){bs=s;best=p}}return best}
 function chooseHome(d){
-  const free=NESTS.filter(n=>!n.owner);if(!free.length)return null;
+  if(d.king)return null;
+  const free=NESTS.filter(n=>!n.owner&&n.tier<=d.tier);if(!free.length)return null;
   free.sort((a,b)=>perchScore(d,b.perch)-perchScore(d,a.perch));const n=free[0];n.owner=d;d.home=n;return n;
 }
 function releasePerch(d){if(d.perch&&d.perch.holder===d)d.perch.holder=null;d.perch=null}
 function setSpot(d,p,dx=0){d.perch=p;if(!d.parent||adultish(d))p.holder=d;d.spot=V(p.x+dx,p.y)}
+function zoneRange(d){const z=ZONES[d.tier],lo=d.tier>0?ZONES[d.tier-1].x0+300:0;return[lo,z.x1-60]}
 function wander(d){
-  const range=d.home?1400:2800,x=clamp((d.home?d.home.x:d.x)+(R()-.5)*range*2,150,WORLD_W-150);
-  d.target=V(x,clamp(surf(x)-200-R()*320,90,700));
+  const [lo,hi]=zoneRange(d),x=clamp(lo+R()*(hi-lo),150,WORLD_W-150);
+  d.target=V(x,clamp(surf(x)-220-R()*320*d.k,80,650));
 }
 function go(d,state,timer=0){d.state=state;d.timer=timer}
+function startRoar(d,ms=1300){if(d.roarT<=0)roarBurst(d);d.roarT=ms}
+function startBreath(d,ms){d.breathT=ms??(d.king?2600:1400)}
 
 // ---------- spawning ----------
 function spawnStray(now){
-  const r=R(),species=r<.35?'drake':r<.62?'wyvern':r<.8?'serpent':'fire';
-  const left=R()<.5,d=makeDragon({species,x:left?-150:WORLD_W+150,y:200+R()*200,vx:left?3:-3,born:now-R()*20000,k:.9+R()*.25});
-  d.maxK=d.k;d.arrive=0;go(d,'fly');d.target=V(left?400+R()*800:WORLD_W-400-R()*800,300);chooseHome(d);
-  logEvent(`${d.name} the ${d.sp.label} arrived from beyond the mountains`);
+  if(R()<.75){const d=makeDragon({tier:0,x:-150,y:200+R()*200,vx:3,born:now-R()*20000});d.arrive=0;go(d,'fly');d.target=V(300+R()*900,320);chooseHome(d);
+    logEvent(`${d.name}, a common ${ELEMENTS[d.element].name.toLowerCase()} ${d.sp.label.toLowerCase()}, wandered in from the wilds`)}
+  else{const tier=2+Math.floor(R()*2),z=ZONES[tier],x=z.x0+300+R()*(z.x1-z.x0-600),d=makeDragon({tier,x,y:-220,vx:R()<.5?1:-1,born:now-R()*30000});
+    d.arrive=0;go(d,'fly');d.target=V(x,350);chooseHome(d);for(let i=0;i<20;i++)emit('star',x,60,Math.PI/2,ELEMENTS[d.element].glow,{v:3,spread:1.2,life:1400,size:3});
+    logEvent(`${titleOf(d)} of ${ELEMENTS[d.element].name} descended from the heavens`)}
 }
 function layEgg(d,now){
-  const n=d.home;n.eggs.push({species:d.species,pal:d.pal,laid:now,hatchAt:now+24000+R()*16000,parent:d,
-    color:shade(d.pal.body,.15),glow:d.pal.eye.split(',').map(Number)});
-  d.nextEgg=now+70000+R()*60000;logEvent(`${d.name} laid an egg at ${n.name}`);
+  const n=d.home,el=ELEMENTS[d.element];
+  n.eggs.push({tier:d.tier,element:d.element,body:d.body,laid:now,hatchAt:now+24000+R()*16000,parent:d,color:shade(el.body,.15),glow:el.glow});
+  d.nextEgg=now+70000+R()*60000;logEvent(`${titleOf(d)} laid a ${el.name.toLowerCase()} egg at ${n.name}`);
 }
 function hatch(n,e,now){
-  const p=e.parent&&e.parent.alive?e.parent:null;
-  const d=makeDragon({species:e.species,pal:e.pal,x:n.x,y:n.y-14,k:.3,maxK:.8+R()*.35,born:now,parent:p,gen:p?p.gen+1:1});
+  const p=e.parent&&e.parent.alive?e.parent:null,[s0,s1]=TIERS[e.tier].scale,maxK=s0+R()*(s1-s0);
+  const d=makeDragon({tier:e.tier,body:e.body,element:R()<.7?e.element:undefined,x:n.x,y:n.y-14,k:maxK*.3,maxK,born:now,parent:p,gen:p?p.gen+1:1});
   if(p)p.children++;
-  d.perch=n.perch;d.spot=V(n.x+(R()<.5?-26:26),n.y);go(d,'perch',3000+R()*3000);d.pose.legs=1;d.pose.fold=1;d.want.legs=1;d.want.fold=1;
-  for(let i=0;i<14;i++){const a=R()*TAU;SPARKS.push({x:n.x,y:n.y-12,vx:Math.cos(a)*2,vy:Math.sin(a)*2-1.5,life:1,c:e.glow})}
+  d.perch=n.perch;d.spot=V(n.x+(R()<.5?-26:26),n.y);go(d,'perch',3000+R()*3000);d.pose.legs=d.want.legs=1;d.pose.fold=d.want.fold=1;
+  for(let i=0;i<14;i++)emit('orb',n.x,n.y-12,-Math.PI/2,e.glow,{v:2,spread:1.4,life:900,size:2});
   logEvent(`${d.name} hatched at ${n.name}`);
 }
-const SPARKS=[];
 
-// ---------- initial world ----------
+// ---------- the opening scene ----------
 function seedWorld(now){
-  const at=(name)=>PERCHES.find(p=>p.name===name);
-  const plan=[['drake',0,'Great Peak East Ledge'],['drake',1,'Watchtower Crown'],['fire',0,'Ashmaw Volcano West Ledge'],['fire',1,'Ashmaw Volcano East Ledge'],
-    ['wyvern',0,'North Spire East Ledge'],['wyvern',1,'Citadel Keep'],['serpent',0,'Old Mesa Plateau'],['drake',2,'Great Peak West Ledge'],['wyvern',2,null]];
-  plan.forEach(([sp,pi,where],i)=>{
-    const p=where&&at(where),d=makeDragon({species:sp,pal:SPECIES[sp].palettes[pi],x:p?p.x:2000+i*300,y:p?p.y-60:300,vx:R()<.5?2:-2,born:now-R()*90000,k:.95+R()*.25});
-    d.maxK=d.k;if(p&&p.nest){p.nest.owner=d;d.home=p.nest}
-    if(p&&i%3!==2){setSpot(d,p);d.y=p.y-standHeight(d);d.x=p.x;go(d,'perch',4000+R()*8000);d.pose.legs=d.want.legs=1;d.pose.fold=d.want.fold=1}
-    else{go(d,'fly');wander(d);if(!d.home)chooseHome(d)}
-  });
-  // one egg about to hatch, and one hatchling already following its mother
-  const nest=NESTS.find(n=>n.owner&&n.owner.species==='drake');
-  if(nest){nest.eggs.push({species:'drake',pal:nest.owner.pal,laid:now-20000,hatchAt:now+9000,parent:nest.owner,color:shade(nest.owner.pal.body,.15),glow:nest.owner.pal.eye.split(',').map(Number)})}
-  const mom=DRAGONS.find(d=>d.species==='fire'&&d.home);
-  if(mom){const h=makeDragon({species:'fire',pal:mom.pal,x:mom.x-40,y:mom.y,k:.42,maxK:.95,born:now-15000,parent:mom,gen:2});mom.children++;
+  const plan=[[0,6],[1,5],[2,4],[3,3]];
+  for(const [tier,count] of plan){
+    const ps=PERCHES.filter(p=>p.tier===tier&&!p.king);
+    for(let i=0;i<count;i++){
+      const p=ps[i%ps.length],free=p&&!p.holder,d=makeDragon({tier,x:p?p.x:ZONES[tier].x0+400,y:p?p.y-80:300,vx:R()<.5?2:-2,born:now-R()*120000});
+      d.k=d.maxK;
+      if(p&&p.nest&&!p.nest.owner){p.nest.owner=d;d.home=p.nest}
+      if(free&&i%3!==2){setSpot(d,p);d.y=p.y-standHeight(d);d.x=p.x;go(d,'perch',4000+R()*9000);d.pose.legs=d.want.legs=1;d.pose.fold=d.want.fold=1}
+      else{d.x=ZONES[tier].x0+200+R()*(ZONES[tier].x1-ZONES[tier].x0-400);d.y=250+R()*200;go(d,'fly');wander(d);if(!d.home)chooseHome(d)}
+    }
+  }
+  const throne=PERCHES.find(p=>p.king);
+  KING=makeDragon({king:1,tier:4,x:throne.x,y:throne.y-120,vx:-1,born:now-60000});
+  setSpot(KING,throne);KING.y=throne.y-standHeight(KING);go(KING,'perch',14000);KING.pose.legs=KING.want.legs=1;KING.pose.fold=KING.want.fold=1;KING.facing=-1;KING.fx=-1;
+  // an egg about to hatch among the commoners, and a young one beside its mother
+  const nest=NESTS.find(n=>n.owner&&n.tier===0);
+  if(nest)nest.eggs.push({tier:0,element:nest.owner.element,body:nest.owner.body,laid:now-20000,hatchAt:now+9000,parent:nest.owner,color:shade(ELEMENTS[nest.owner.element].body,.15),glow:ELEMENTS[nest.owner.element].glow});
+  const mom=DRAGONS.find(d=>d.tier===1&&d.home&&d.state==='perch');
+  if(mom){const h=makeDragon({tier:1,body:mom.body,element:mom.element,x:mom.x-40,y:mom.y,k:mom.maxK*.42,maxK:mom.maxK,born:now-15000,parent:mom,gen:2});mom.children++;
     h.perch=mom.perch;h.spot=V(mom.home.x-30,mom.home.y);go(h,'perch',5000);h.pose.legs=h.want.legs=1;h.pose.fold=h.want.fold=1;h.y=mom.home.y-standHeight(h)}
 }
 
-// ---------- per-frame update ----------
+// ---------- per frame ----------
 let nextStray=0;
 function updateWorld(now,dt){
   performanceNow=now;
   const f=dt/16.67,night=SKY.night>.62,morning=SKY.night<.25;
-  // eggs
   for(const n of NESTS)for(let i=n.eggs.length-1;i>=0;i--)if(now>=n.eggs[i].hatchAt){const e=n.eggs.splice(i,1)[0];if(DRAGONS.length<CAP())hatch(n,e,now)}
-  // strays keep the world populated
   const adults=DRAGONS.filter(adultish).length;
-  if(now>nextStray){if(DRAGONS.length<CAP()&&adults<CAP()*.55)spawnStray(now);nextStray=now+18000+R()*20000}
+  if(now>nextStray){if(DRAGONS.length<CAP()&&adults<CAP()*.6)spawnStray(now);nextStray=now+16000+R()*18000}
   for(const d of [...DRAGONS])updateDragon(d,now,dt,f,night,morning);
   for(let i=DRAGONS.length-1;i>=0;i--)if(!DRAGONS[i].alive)DRAGONS.splice(i,1);
-  for(let i=SPARKS.length-1;i>=0;i--){const s=SPARKS[i];s.x+=s.vx*f;s.y+=s.vy*f;s.vy+=.03*f;s.life-=dt/900;if(s.life<=0)SPARKS.splice(i,1)}
 }
 
 function updateDragon(d,now,dt,f,night,morning){
   const sp=d.sp,P=d.pose,Wt=d.want;
   if(d.arrive!==undefined){d.arrive+=dt/1500;if(d.arrive>=1)delete d.arrive}
-  // growth and age
-  if(d.k<d.maxK){d.k=Math.min(d.maxK,d.k+(d.maxK-.3)*dt/80000)}
+  if(d.k<d.maxK)d.k=Math.min(d.maxK,d.k+d.maxK*.7*dt/80000);
   if(d.parent&&(!d.parent.alive||d.parent.state==='ascend'||adultish(d))){if(adultish(d)&&d.parent)logEvent(`${d.name} left ${d.parent.name}'s nest`);d.parent=null;if(!d.home)chooseHome(d)}
   if(!d.parent&&adultish(d)&&!d.home&&R()<.002)chooseHome(d);
-  if(d.state!=='ascend'&&ageOf(d)>=1){releasePerch(d);if(d.home){d.home.owner=null;d.home=null}go(d,'ascend');d.y0=d.y;logEvent(`${d.name} the ${sp.label} ascended to the stars`)}
+  const kid=d.parent&&!adultish(d);              // decided after the parent check, so an orphan never reads a missing parent
+  if(!d.king&&d.state!=='ascend'&&ageOf(d)>=1){releasePerch(d);if(d.home){d.home.owner=null;d.home=null}go(d,'ascend');d.y0=d.y;logEvent(`${titleOf(d)} ascended to the stars`)}
   if(d.blink<=0&&R()<.003)d.blink=1;if(d.blink>0)d.blink=Math.max(0,d.blink-dt/150);
-  if(d.breathes===undefined)d.breathes=d.species==='drake'&&R()<.5;
-  if(d.roarT>0){d.roarT-=dt;if(sp.fire||(d.breathes&&d.roarT>300))breathe(d)}
+  if(d.roarT>0)d.roarT-=dt;
+  if(d.breathT>0){d.breathT-=dt;breathe(d)}
+  if(d.tier>=2&&!reduce&&R()<(d.king?.6:d.tier===3?.12:.05))auraMote(d);
+  if(d.king&&!reduce&&R()<.5&&d.tailW)emit('star',d.tailW.x,d.tailW.y,Math.PI/2,[255,240,200],{v:.5,spread:1,life:1400,size:2.2});
   d.timer-=dt;
 
-  // ---- decide ----
-  const kid=d.parent&&!adultish(d);
   switch(d.state){
     case 'fly':{
       if(kid){const p=d.parent;
         if(!isAir(p.state)&&p.perch){d.perch=p.perch;d.spot=V(p.perch.x+(d.id%2?-34:34)*(.6+p.k*.4),p.perch.y);go(d,'approach');break}
         d.target=V(p.x-p.fx*(70+d.id%3*20)*p.k,p.y+30*p.k);break}
-      if(!d.target||Math.hypot(d.target.x-d.x,d.target.y-d.y)<70||d.timer<-40000){
+      if(!d.target||Math.hypot(d.target.x-d.x,d.target.y-d.y)<70){
         if(night||d.timer<0&&R()<.6||d.home&&d.home.eggs.length&&R()<.5){const p=choosePerch(d);if(p){setSpot(d,p);go(d,'approach');break}}
         wander(d);if(d.timer<0)d.timer=12000+R()*20000}
-      if(sp.fire&&R()<.0015)d.roarT=900;
+      if(d.tier>=1&&R()<.0012*d.tier&&d.breathT<=0){startRoar(d,900);startBreath(d,900)}
+      break}
+    case 'patrol':{                                   // the King's flight over his realm
+      if(!d.route||!d.route.length){const p=PERCHES.find(q=>q.king);setSpot(d,p);go(d,'approach');break}
+      d.target=d.route[0];if(Math.hypot(d.target.x-d.x,d.target.y-d.y)<120){d.route.shift();if(R()<.5){startRoar(d,1600);startBreath(d,2200)}}
       break}
     case 'approach':{
       if(kid&&isAir(d.parent.state)){go(d,'fly');break}
@@ -795,81 +977,76 @@ function updateDragon(d,now,dt,f,night,morning){
       break}
     case 'land':{
       d.target=V(d.spot.x,d.spot.y-standHeight(d));
-      if(Math.hypot(d.target.x-d.x,d.target.y-d.y)<3){d.x=d.target.x;d.y=d.target.y;d.vx=d.vy=0;go(d,'perch',kid?2000:7000+R()*14000)}
+      if(Math.hypot(d.target.x-d.x,d.target.y-d.y)<3){d.x=d.target.x;d.y=d.target.y;d.vx=d.vy=0;go(d,'perch',kid?2000:d.king?20000+R()*20000:7000+R()*14000);if(d.king)startRoar(d,1400)}
       break}
     case 'perch':case 'brood':case 'sleep':{
-      if(kid){const p=d.parent;
-        if(isAir(p.state)&&d.state!=='sleep'||p.state==='takeoff'){go(d,'takeoff',700);break}
-        Wt.sleep=p.state==='sleep'||night?1:0;break}
-      if(d.state==='sleep'){if(morning&&d.timer<0){go(d,'perch',3000+R()*5000)}break}
-      if(d.home&&d.perch===d.home.perch&&now>d.nextEgg&&d.home.eggs.length<2&&ageOf(d)>.15&&ageOf(d)<.8&&DRAGONS.length+NESTS.reduce((a,n)=>a+n.eggs.length,0)<CAP()){layEgg(d,now);go(d,'brood',12000)}
-      if(d.state==='perch'&&R()<.0008)d.roarT=1100;
+      if(kid){const p=d.parent;if(isAir(p.state)&&d.state!=='sleep'||p.state==='takeoff'){go(d,'takeoff',700);break}Wt.sleep=p.state==='sleep'||night?1:0;break}
+      if(d.state==='sleep'){if(morning&&d.timer<0)go(d,'perch',3000+R()*5000);break}
+      if(!d.king&&d.home&&d.perch===d.home.perch&&now>d.nextEgg&&d.home.eggs.length<2&&ageOf(d)>.15&&ageOf(d)<.8&&DRAGONS.length+NESTS.reduce((a,n)=>a+n.eggs.length,0)<CAP()){layEgg(d,now);go(d,'brood',12000)}
+      if(d.state==='perch'&&R()<(d.king?.002:.0008))startRoar(d,d.king?1800:1100);
       if(d.timer<0){
-        if(night){go(d,'sleep',4000+R()*8000)}
+        if(night&&!d.king)go(d,'sleep',4000+R()*8000);
+        else if(d.king){if(night)go(d,'brood',16000);else{const xs=[5600,4200,2800,1500,700,2200,3800,5500,6700];d.route=xs.map(x=>V(x,clamp(surf(x)-380,90,420)));go(d,'takeoff',1200);d.afterTakeoff='patrol';logEvent('The Dragon King takes to the sky')}}
         else if(d.state==='perch'&&d.home&&d.perch===d.home.perch&&d.home.eggs.length&&R()<.6)go(d,'brood',10000+R()*10000);
         else go(d,'takeoff',900);
       }
       break}
-    case 'takeoff':{if(d.timer<0){releasePerch(d);go(d,'fly',kid?0:12000+R()*18000);if(!kid)wander(d)}break}
+    case 'takeoff':{if(d.timer<0){releasePerch(d);if(d.afterTakeoff){go(d,d.afterTakeoff);d.afterTakeoff=null}else{go(d,'fly',kid?0:12000+R()*18000);if(!kid)wander(d)}}break}
     case 'ascend':{d.ascend=clamp((d.y0-d.y)/(d.y0+320),0,1);d.target=V(d.x+Math.sin(now/800)*40,-600);
       if(d.y<-320){d.alive=false;memorialStars.push({x:(d.x/WORLD_W*.9+.05),y:.05+R()*.28,r:1.4+d.k,p:R()*7,c:d.pal.eye,born:now});if(cam.follow===d)cam.follow=null}
       break}
   }
 
   // ---- pose targets ----
-  const air=isAir(d.state)||(d.state==='land');
+  const air=isAir(d.state)||d.state==='land';
   if(air){Wt.fold=d.state==='land'?.15:0;Wt.legs=d.state==='land'||d.state==='takeoff'?.9:0;Wt.sit=0;Wt.sleep=0;Wt.neck=-.32}
   else{Wt.fold=1;Wt.legs=1;Wt.sit=d.state==='brood'?1:0;if(!kid)Wt.sleep=d.state==='sleep'?1:0;Wt.neck=Wt.sleep>.5?.55:Wt.sit>.5?-.75:-1.0}
   const rate=.07*f;for(const key of ['fold','legs','sit','sleep','neck'])P[key]+=(Wt[key]-P[key])*Math.min(1,rate);
-  P.jaw+=((d.roarT>0?1:0)-P.jaw)*Math.min(1,.2*f);
+  P.jaw+=((d.roarT>0||d.breathT>0?1:0)-P.jaw)*Math.min(1,.2*f);
 
   // ---- move ----
-  if(sp.wings||d.species==='serpent'){
-    if(air||!sp.wings){
-      const ground=(!sp.wings&&!air);   // serpents coil around their perch instead of landing
-      let tx,ty;
-      if(ground&&d.spot){const t=now/(d.state==='sleep'?2600:1300)+d.phase;tx=d.spot.x+Math.cos(t)*34*d.k;ty=d.spot.y-46*d.k+Math.sin(t)*16*d.k}
-      else if(d.state==='takeoff'){tx=d.x+d.facing*40;ty=d.y-120}
-      else if(d.target){tx=d.target.x;ty=d.target.y}else{tx=d.x;ty=d.y}
-      const dx=tx-d.x,dy=ty-d.y,dist=Math.hypot(dx,dy)||1;
-      const maxV=sp.speed*(.55+.45*d.k)*(kid?1.15:1)*(d.state==='land'?.35:1)*(ground?.5:1)*(d.state==='ascend'?.9:1);
-      const want=Math.min(1,dist/(d.state==='land'?40:150))*maxV;
-      d.vx+=(dx/dist*want-d.vx)*.045*f;d.vy+=(dy/dist*want-d.vy)*.045*f;
-      if(d.state==='fly'&&d.y>surf(d.x)-110*d.k)d.vy-=.35*f;            // never scrape the ground in flight
-      if(d.state==='fly'){d.x=clamp(d.x,-200,WORLD_W+200)}
-      d.x+=d.vx*f;d.y+=d.vy*f;
-      if(Math.abs(d.vx)>.35)d.facing=Math.sign(d.vx);
-      P.pitch=clamp(Math.atan2(d.vy,Math.abs(d.vx)+.5)*.6,-.5,.45);
-      d.flapSpeed=1+Math.max(0,-d.vy)*.35+(d.state==='land'||d.state==='takeoff'?.9:0)+(kid?.4:0);
-      P.flap+=dt*.0075*d.flapSpeed*(d.vy>1.2&&d.state==='fly'?.35:1);
-    }else{
-      // standing: settle onto the spot
-      const sy=d.spot?d.spot.y-standHeight(d):d.y;d.x+=((d.spot?d.spot.x:d.x)-d.x)*.1*f;d.y+=(sy-d.y)*.1*f;d.vx=d.vy=0;P.pitch*=.9;
-      P.flap+=dt*.002;
-    }
+  if(air||!sp.wings){
+    const ground=!sp.wings&&!air;let tx,ty;
+    if(ground&&d.spot){const t=now/(d.state==='sleep'?2600:1300)+d.phase;tx=d.spot.x+Math.cos(t)*34*d.k;ty=d.spot.y-46*d.k+Math.sin(t)*16*d.k}
+    else if(d.state==='takeoff'){tx=d.x+d.facing*40;ty=d.y-120}
+    else if(d.target){tx=d.target.x;ty=d.target.y}else{tx=d.x;ty=d.y}
+    const dx=tx-d.x,dy=ty-d.y,dist=Math.hypot(dx,dy)||1;
+    const maxV=sp.speed*(.55+.45*Math.min(1.2,d.k))*(kid?1.15:1)*(d.state==='land'?.35:1)*(ground?.5:1)*(d.state==='ascend'?.9:1)*(d.king?.75:1);
+    const want=Math.min(1,dist/(d.state==='land'?40:150))*maxV;
+    d.vx+=(dx/dist*want-d.vx)*.045*f;d.vy+=(dy/dist*want-d.vy)*.045*f;
+    if((d.state==='fly'||d.state==='patrol')&&d.y>surf(d.x)-110*d.k)d.vy-=.35*f;
+    if(d.state==='fly')d.x=clamp(d.x,-200,WORLD_W+200);
+    d.x+=d.vx*f;d.y+=d.vy*f;
+    if(Math.abs(d.vx)>.35)d.facing=Math.sign(d.vx);
+    P.pitch=clamp(Math.atan2(d.vy,Math.abs(d.vx)+.5)*.6,-.5,.45);
+    d.flapSpeed=(1+Math.max(0,-d.vy)*.35+(d.state==='land'||d.state==='takeoff'?.9:0)+(kid?.4:0))*(d.king?.6:1);
+    P.flap+=dt*.0075*d.flapSpeed*(d.vy>1.2&&isAir(d.state)?.35:1);
+  }else{
+    const sy=d.spot?d.spot.y-standHeight(d):d.y;d.x+=((d.spot?d.spot.x:d.x)-d.x)*.1*f;d.y+=(sy-d.y)*.1*f;d.vx=d.vy=0;P.pitch*=.9;P.flap+=dt*.002;
   }
   d.groundLocal=d.spot?(d.spot.y-d.y)/d.k:60;
-  // ---- head: look ahead, look around, or look at the cursor ----
+
+  // ---- head: look ahead, look around, bow to the King, or look at the cursor ----
   let look=air?P.pitch*.6-.05:-.12+.22*Math.sin(now/1700+d.phase);
   if(P.sleep>.5)look=.95;
-  const hx=d.headW?d.headW.x:d.x,hy=d.headW?d.headW.y:d.y,cd=Math.hypot(mouse.wx-hx,mouse.wy-hy);
-  if(mouse.inside&&cd<320&&P.sleep<.5&&d.state!=='ascend'){
-    const fx=Math.sign(d.fx)||1;let lx=(mouse.wx-hx)*fx;
-    if(!air&&lx<-20&&d.species!=='serpent'){d.facing=-d.facing;lx=-lx}                // turn around to face you
-    look=clamp(Math.atan2(mouse.wy-hy,Math.max(lx,10)),-1.2,.95);
-  }
+  const hx=d.headW?d.headW.x:d.x,hy=d.headW?d.headW.y:d.y;
+  if(KING&&d!==KING&&KING.alive&&P.sleep<.5&&Math.hypot(KING.x-d.x,KING.y-d.y)<520*KING.k*.5){look=.75;if(!air)d.facing=Math.sign(KING.x-d.x)||d.facing}   // bow
+  else{const cd=Math.hypot(mouse.wx-hx,mouse.wy-hy);
+    if(mouse.inside&&cd<320*Math.max(1,d.k*.7)&&P.sleep<.5&&d.state!=='ascend'){
+      const fx=Math.sign(d.fx)||1;let lx=(mouse.wx-hx)*fx;
+      if(!air&&lx<-20&&d.body!=='serpent'){d.facing=-d.facing;lx=-lx}
+      look=clamp(Math.atan2(mouse.wy-hy,Math.max(lx,10)),-1.2,.95)}}
   P.head+=(look-P.head)*Math.min(1,.08*f);
   d.fx+=(d.facing-d.fx)*Math.min(1,.12*f);if(Math.abs(d.fx)<.05)d.fx=.05*Math.sign(d.facing||1);
-  // serpent body follows its head
   if(d.seg){d.seg[0].x=d.x;d.seg[0].y=d.y;const L=sp.segL*d.k;
     for(let i=1;i<d.seg.length;i++){const a=d.seg[i-1],s=d.seg[i],ang=Math.atan2(s.y-a.y,s.x-a.x)+(reduce?0:Math.sin(now/300-i*.4+d.phase)*.04);s.x=a.x+Math.cos(ang)*L;s.y=a.y+Math.sin(ang)*L}}
 }
 
 
-// ===================== Interface: hover, info cards, minimap, census, events =====================
-let selected=null;                                    // {type:'dragon'|'nest', ref}
+// ===================== Interface: caste track, info cards, minimap, census, events =====================
+let selected=null;
 const $=id=>document.getElementById(id);
-const card=$('card'),census=$('census'),clockEl=$('clock'),ticker=$('ticker'),mini=$('mini'),mctx=mini.getContext('2d');
+const card=$('card'),census=$('census'),clockEl=$('clock'),ticker=$('ticker'),mini=$('mini'),mctx=mini.getContext('2d'),track=$('track'),banner=$('banner');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function dragonAt(wx,wy){
@@ -881,64 +1058,78 @@ function dragonAt(wx,wy){
 }
 const nestAt=(wx,wy)=>NESTS.find(n=>Math.abs(n.x-wx)<40&&Math.abs(n.y-12-wy)<26);
 onClickHandlers.push((wx,wy)=>{
-  const d=dragonAt(wx,wy);
-  if(d){selected={type:'dragon',ref:d};d.roarT=1300;renderCard(true);return}
-  const n=nestAt(wx,wy);
-  if(n){selected={type:'nest',ref:n};renderCard(true);return}
+  const d=dragonAt(wx,wy);if(d){selected={type:'dragon',ref:d};startRoar(d);renderCard(true);return}
+  const n=nestAt(wx,wy);if(n){selected={type:'nest',ref:n};renderCard(true);return}
   selected=null;renderCard(true);
 });
-
 function statusOf(d){
   const p=d.perch?d.perch.name:'the cliffs';
   switch(d.state){
-    case 'fly':return d.parent&&!adultish(d)?`Flying beside ${d.parent.name}`:'Soaring over the valley';
+    case 'fly':return d.parent&&!adultish(d)?`Flying beside ${d.parent.name}`:`Soaring over ${zoneAt(d.x).name}`;
+    case 'patrol':return 'Patrolling the realm — all bow as he passes';
     case 'approach':return `Heading for ${p}`;case 'land':return `Landing on ${p}`;
-    case 'perch':return d.species==='serpent'?`Coiled around ${p}`:`Perched on ${p}`;
-    case 'brood':return `Guarding eggs at ${p}`;case 'sleep':return `Asleep on ${p}`;
+    case 'perch':return d.king?'Enthroned on the Throne of Heaven':d.body==='serpent'?`Coiled around ${p}`:`Perched on ${p}`;
+    case 'brood':return d.king?'Keeping watch from the Throne of Heaven':`Guarding eggs at ${p}`;case 'sleep':return `Asleep on ${p}`;
     case 'takeoff':return 'Taking flight';case 'ascend':return 'Ascending to the stars';default:return '';
   }
 }
 const pct=v=>`${Math.round(clamp(v,0,1)*100)}%`;
+const TIER_COL=['#9a9488','#c98a4a','#c7c9d6','#e8c46a','#fff1c4'];
 function renderCard(force){
   if(!selected||(selected.type==='dragon'&&!selected.ref.alive)){if(!card.hidden||force){card.hidden=true;card.innerHTML=''}selected=null;return}
   card.hidden=false;
-  if(selected.type==='dragon'){const d=selected.ref,age=clamp(ageOf(d),0,1),following=cam.follow===d;
+  if(selected.type==='dragon'){const d=selected.ref,el=ELEMENTS[d.element],age=clamp(ageOf(d),0,1),following=cam.follow===d;
+    card.classList.toggle('royal',d.king);
     card.innerHTML=`
-      <div class="card-head"><span class="swatch" style="background:rgb(${d.pal.body});box-shadow:0 0 0 2px rgb(${d.pal.wing})"></span>
-        <div><h2>${esc(d.name)}</h2><p class="sub">${esc(d.pal.name)} ${esc(d.sp.label)} · ${stageOf(d)}</p></div>
+      <div class="card-head"><span class="swatch" style="background:rgb(${el.body});box-shadow:0 0 0 2px rgb(${el.glow}),0 0 14px rgb(${el.glow})"></span>
+        <div><h2>${esc(d.king?'Aurelion':d.name)}</h2><p class="sub">${d.king?'The Dragon King · Sovereign of Aether':`${esc(TIERS[d.tier].name)} caste · ${esc(d.sp.label)} · ${stageOf(d)}`}</p></div>
         <button class="x" data-act="close" aria-label="Close">×</button></div>
+      <p class="badges"><span class="tier" style="color:${TIER_COL[d.tier]};border-color:${TIER_COL[d.tier]}">${esc(d.king?'King':TIERS[d.tier].name)}</span><span class="elem" style="color:rgb(${el.glow});border-color:rgba(${el.glow},.6)">${esc(el.name)}</span></p>
+      <p class="desc">${esc(el.desc)}</p>
       <p class="status">${esc(statusOf(d))}</p>
-      <div class="meter" aria-label="Life"><i style="width:${pct(age)}"></i></div>
+      ${d.king?'':`<div class="meter" aria-label="Life"><i style="width:${pct(age)}"></i></div>`}
       <dl>
-        <dt>Size</dt><dd>${pct(d.k/d.maxK)} grown</dd>
-        <dt>Home nest</dt><dd>${d.home?esc(d.home.name):'None yet'}</dd>
-        <dt>Parent</dt><dd>${d.parent?esc(d.parent.name):'—'}</dd>
-        <dt>Hatchlings</dt><dd>${d.children}</dd>
-        <dt>Generation</dt><dd>${d.gen}</dd>
+        <dt>Size</dt><dd>${d.king?'Colossal':pct(d.k/d.maxK)+' grown'}</dd>
+        <dt>Realm</dt><dd>${esc(ZONES[d.tier].name)}</dd>
+        <dt>Home</dt><dd>${d.king?'Throne of Heaven':d.home?esc(d.home.name):'None yet'}</dd>
+        ${d.king?'':`<dt>Parent</dt><dd>${d.parent?esc(d.parent.name):'—'}</dd><dt>Hatchlings</dt><dd>${d.children}</dd><dt>Generation</dt><dd>${d.gen}</dd>`}
       </dl>
-      <div class="actions"><button data-act="follow">${following?'Stop following':'Follow'}</button><button data-act="roar">${d.sp.fire||d.breathes?'Breathe fire':'Roar'}</button></div>`;
-  }else{const n=selected.ref,now=performanceNow;
+      <div class="actions"><button data-act="follow">${following?'Stop following':'Follow'}</button><button data-act="roar">Roar</button><button data-act="breath">Breathe ${esc(el.name)}</button></div>`;
+  }else{const n=selected.ref,now=performanceNow;card.classList.remove('royal');
     card.innerHTML=`
-      <div class="card-head"><span class="swatch nest"></span><div><h2>${esc(n.name)}</h2><p class="sub">Nest · ${n.eggs.length} egg${n.eggs.length===1?'':'s'}</p></div>
+      <div class="card-head"><span class="swatch nest"></span><div><h2>${esc(n.name)}</h2><p class="sub">${esc(TIERS[n.tier].name)} nest · ${n.eggs.length} egg${n.eggs.length===1?'':'s'}</p></div>
         <button class="x" data-act="close" aria-label="Close">×</button></div>
-      <p class="status">${n.owner?`Claimed by ${esc(n.owner.name)} the ${esc(n.owner.sp.label)}`:'Unclaimed — waiting for a dragon to settle here'}</p>
-      ${n.eggs.map((e,i)=>`<div class="egg"><span>Egg ${i+1}</span><div class="meter"><i style="width:${pct((now-e.laid)/(e.hatchAt-e.laid))}"></i></div><span>${Math.max(0,Math.ceil((e.hatchAt-now)/1000))}s</span></div>`).join('')||'<p class="muted">No eggs right now.</p>'}
+      <p class="status">${n.owner?`Claimed by ${esc(titleOf(n.owner))}`:'Unclaimed — waiting for a dragon of this caste or higher'}</p>
+      ${n.eggs.map((e,i)=>`<div class="egg"><span style="color:rgb(${e.glow})">${esc(ELEMENTS[e.element].name)}</span><div class="meter"><i style="width:${pct((now-e.laid)/(e.hatchAt-e.laid))}"></i></div><span>${Math.max(0,Math.ceil((e.hatchAt-now)/1000))}s</span></div>`).join('')||'<p class="muted">No eggs right now.</p>'}
       <div class="actions"><button data-act="close">Close</button></div>`;
   }
 }
-card.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!selected)return;const act=b.dataset.act;
+card.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!selected)return;const act=b.dataset.act,d=selected.ref;
   if(act==='close'){selected=null;renderCard(true)}
-  if(act==='follow'&&selected.type==='dragon'){cam.follow=cam.follow===selected.ref?null:selected.ref;renderCard(true)}
-  if(act==='roar'&&selected.type==='dragon'){selected.ref.roarT=1400}});
+  if(act==='follow'&&selected.type==='dragon'){cam.follow=cam.follow===d?null:d;renderCard(true)}
+  if(act==='roar'&&selected.type==='dragon')startRoar(d,d.king?2000:1400);
+  if(act==='breath'&&selected.type==='dragon'){startRoar(d,d.king?2600:1400);startBreath(d)}});
 card.addEventListener('pointerdown',e=>e.stopPropagation());
 
-const SPECIES_ORDER=[['drake','Drakes'],['fire','Fire drakes'],['wyvern','Wyverns'],['serpent','Serpents']];
+// ---------- caste track: the five realms, and where you are looking ----------
+track.innerHTML=ZONES.map((z,i)=>`<button data-z="${i}" style="--c:${TIER_COL[i]}"><b>${esc(z.caste)}</b><span>${esc(z.name)}</span></button>`).join('')+'<i id="trackMark"></i>';
+track.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const z=ZONES[+b.dataset.z];cam.follow=null;cam.x=(z.x0+z.x1)/2-viewW()/2;clampCam()});
+track.addEventListener('pointerdown',e=>e.stopPropagation());
+let lastZone=-1,bannerT=0;
+function updateTrack(dt){
+  const cx=cam.x+viewW()/2,z=zoneAt(cx);$('trackMark').style.left=`${clamp(cx/WORLD_W,0,1)*100}%`;
+  [...track.querySelectorAll('button')].forEach((b,i)=>b.classList.toggle('on',i===z.tier));
+  if(z.tier!==lastZone){lastZone=z.tier;banner.innerHTML=`<small>${esc(z.caste==='The Dragon King'?'The realm of':z.caste+' caste')}</small>${esc(z.name)}`;banner.style.setProperty('--c',TIER_COL[z.tier]);banner.classList.add('show');bannerT=2600}
+  if(bannerT>0){bannerT-=dt;if(bannerT<=0)banner.classList.remove('show')}
+}
+
+const TIER_LABELS=['Common','Middle','High','Emperor'];
 function renderHud(){
   let phase='Night';for(const [h0,n] of PHASES)if(SKY.hour>=h0)phase=n;
   clockEl.textContent=`Day ${SKY.day} · ${String(Math.floor(SKY.hour)).padStart(2,'0')}:${String(Math.floor(SKY.hour%1*6)*10).padStart(2,'0')} · ${phase}`;
   const young=DRAGONS.filter(d=>!adultish(d)).length,eggs=NESTS.reduce((a,n)=>a+n.eggs.length,0);
-  census.innerHTML=SPECIES_ORDER.map(([k,l])=>`<span class="chip"><i style="background:rgb(${SPECIES[k].palettes[0].body})"></i>${l} <b>${DRAGONS.filter(d=>d.species===k&&adultish(d)).length}</b></span>`).join('')+
-    `<span class="chip">Young <b>${young}</b></span><span class="chip">Eggs <b>${eggs}</b></span>`;
+  census.innerHTML=TIER_LABELS.map((l,t)=>`<span class="chip"><i style="background:${TIER_COL[t]}"></i>${l} <b>${DRAGONS.filter(d=>d.tier===t&&adultish(d)).length}</b></span>`).join('')+
+    `<span class="chip king"><i></i>King <b>${KING&&KING.alive?1:0}</b></span><span class="chip">Young <b>${young}</b></span><span class="chip">Eggs <b>${eggs}</b></span>`;
   ticker.innerHTML=EVENTS.slice(0,3).map((e,i)=>`<p style="opacity:${1-i*.28}">${esc(e.text)}</p>`).join('');
   renderCard(false);
 }
@@ -946,15 +1137,16 @@ function renderHud(){
 // ---------- minimap ----------
 function drawMinimap(){
   const w=mini.clientWidth,h=mini.clientHeight;if(!w)return;
-  if(mini.width!==w*DPR){mini.width=w*DPR;mini.height=h*DPR}
+  if(mini.width!==Math.round(w*DPR)){mini.width=Math.round(w*DPR);mini.height=Math.round(h*DPR)}
   mctx.setTransform(DPR,0,0,DPR,0,0);mctx.clearRect(0,0,w,h);
-  const sx=w/WORLD_W,sy=h/WORLD_H;
-  mctx.fillStyle='rgba(10,10,14,.55)';mctx.fillRect(0,0,w,h);
-  mctx.beginPath();mctx.moveTo(0,h);for(let i=0;i<NS;i+=6)mctx.lineTo(i*STEP*sx,SURF[i]*sy);mctx.lineTo(w,h);mctx.closePath();mctx.fillStyle='rgba(120,110,100,.55)';mctx.fill();
-  const v=MOUNTAINS[1];mctx.fillStyle='rgba(255,110,40,.9)';mctx.beginPath();mctx.arc(v.cx*sx,v.peak*sy,2.2,0,TAU);mctx.fill();
+  const sx=w/WORLD_W,sy=h/WORLD_H,g=mctx.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(10,10,14,.6)');g.addColorStop(1,'rgba(80,70,40,.55)');
+  mctx.fillStyle=g;mctx.fillRect(0,0,w,h);
+  mctx.beginPath();mctx.moveTo(0,h);for(let i=0;i<NS;i+=6)mctx.lineTo(i*STEP*sx,SURF[i]*sy);mctx.lineTo(w,h);mctx.closePath();
+  const tg=mctx.createLinearGradient(0,0,w,0);tg.addColorStop(0,'rgba(110,100,96,.7)');tg.addColorStop(1,'rgba(240,226,190,.8)');mctx.fillStyle=tg;mctx.fill();
+  mctx.fillStyle='rgba(255,110,40,.9)';mctx.beginPath();mctx.arc(VOLCANO.cx*sx,VOLCANO.peak*sy,2.2,0,TAU);mctx.fill();
   for(const n of NESTS){mctx.fillStyle=n.eggs.length?'#ffd27a':'rgba(200,170,120,.7)';mctx.fillRect(n.x*sx-1.5,n.y*sy-3,3,3)}
-  for(const d of DRAGONS){mctx.fillStyle=`rgb(${d.pal.eye})`;mctx.beginPath();mctx.arc(d.x*sx,d.y*sy,adultish(d)?2.4:1.5,0,TAU);mctx.fill()}
-  mctx.strokeStyle='rgba(236,214,160,.9)';mctx.lineWidth=1;mctx.strokeRect(cam.x*sx+.5,cam.y*sy+.5,viewW()*sx-1,viewH()*sy-1);
+  for(const d of DRAGONS){mctx.fillStyle=d.king?'#fff3c8':`rgb(${d.pal.eye})`;mctx.beginPath();mctx.arc(d.x*sx,d.y*sy,d.king?3.6:adultish(d)?2.2:1.4,0,TAU);mctx.fill()}
+  mctx.strokeStyle='rgba(236,214,160,.95)';mctx.lineWidth=1;mctx.strokeRect(cam.x*sx+.5,cam.y*sy+.5,viewW()*sx-1,viewH()*sy-1);
 }
 let miniDrag=false;
 const miniJump=e=>{const r=mini.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*WORLD_W,y=(e.clientY-r.top)/r.height*WORLD_H;cam.follow=null;cam.x=x-viewW()/2;cam.y=y-viewH()/2;clampCam()};
@@ -967,30 +1159,30 @@ let prev=performance.now(),hudT=0;
 skyAt(prev);seedWorld(prev);
 function frame(now){
   const dt=Math.min(50,now-prev);prev=now;
-  skyAt(now);updateCamera(dt);updateWorld(now,dt);updateFire(dt);
-  drawSky(now);drawBackLayers();drawTerrain(now);
+  skyAt(now);updateCamera(dt);updateWorld(now,dt);updateFX(dt);updateTrack(dt);
+  const shx=shake?(R()-.5)*shake/camScale():0,shy=shake?(R()-.5)*shake/camScale():0;cam.x+=shx;cam.y+=shy;
+  drawSky(now);drawHeavenFx(now);drawBackLayers();drawTerrain(now);
   for(const n of NESTS)drawNest(n,now);
   drawVolcanoFx(now);
-  const x0=cam.x-400,x1=cam.x+viewW()+400;
+  const x0=cam.x-500,x1=cam.x+viewW()+500;
   const hov=mouse.inside&&!dragStart?dragonAt(mouse.wx,mouse.wy):null;cv.style.cursor=hov?'pointer':dragStart&&moved>5?'grabbing':'';
-  const vis=DRAGONS.filter(d=>d.x>x0&&d.x<x1).sort((a,b)=>a.k-b.k||(isAir(a.state)?1:0)-(isAir(b.state)?1:0));
+  const vis=DRAGONS.filter(d=>d.x>x0&&d.x<x1).sort((a,b)=>a.k-b.k);
   for(const d of vis)drawDragon(d,now);
-  drawFire();
-  // light pass: eggs, eyes, sparks, the selected dragon's halo
+  drawFX(false);
   ctx.globalCompositeOperation='lighter';drawEggGlow(now);
-  for(const d of vis)drawEyes(d,now);
-  for(const s of SPARKS){ctx.fillStyle=rgba(s.c,s.life*.9);ctx.beginPath();ctx.arc(s.x,s.y,2.2*s.life+.6,0,TAU);ctx.fill()}
+  for(const d of vis)drawLight(d,now);
   const sel=selected&&selected.type==='dragon'?selected.ref:null;
-  for(const d of [sel,hov])if(d&&d.alive){const c=d.headW||V(d.x,d.y),r=90*d.k,g=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,r);
+  for(const d of [sel,hov])if(d&&d.alive){const r=90*d.k,g=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,r);
     g.addColorStop(0,`rgba(${d.pal.eye},${d===sel?.16:.1})`);g.addColorStop(1,`rgba(${d.pal.eye},0)`);ctx.fillStyle=g;ctx.fillRect(d.x-r,d.y-r,r*2,r*2)}
   if(selected&&selected.type==='nest'){const n=selected.ref,g=ctx.createRadialGradient(n.x,n.y-10,0,n.x,n.y-10,70);g.addColorStop(0,'rgba(255,210,120,.2)');g.addColorStop(1,'rgba(255,210,120,0)');ctx.fillStyle=g;ctx.fillRect(n.x-70,n.y-80,140,140)}
   ctx.globalCompositeOperation='source-over';
+  drawFX(true);
   drawForeground();
-  // name tag for the hovered dragon
+  cam.x-=shx;cam.y-=shy;
   screenTransform();
   if(hov&&hov.headW){const p=toScreen(hov.headW.x,hov.headW.y-40*hov.k);ctx.font='600 12px "Cinzel", Georgia, serif';ctx.textAlign='center';
-    const label=`${hov.name} · ${hov.sp.label}`,tw=ctx.measureText(label).width;ctx.fillStyle='rgba(10,8,10,.7)';ctx.fillRect(p.x-tw/2-8,p.y-16,tw+16,22);
-    ctx.fillStyle='#efe4c8';ctx.fillText(label,p.x,p.y)}
+    const label=hov.king?'Aurelion · The Dragon King':`${titleOf(hov)} · ${TIERS[hov.tier].name} ${ELEMENTS[hov.element].name} ${hov.sp.label}`,tw=ctx.measureText(label).width;
+    ctx.fillStyle='rgba(10,8,10,.72)';ctx.fillRect(p.x-tw/2-8,p.y-16,tw+16,22);ctx.fillStyle=TIER_COL[hov.tier];ctx.fillText(label,p.x,p.y)}
   drawMinimap();
   hudT-=dt;if(hudT<=0){renderHud();hudT=250}
   requestAnimationFrame(frame);

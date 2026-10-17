@@ -7,7 +7,7 @@ Five self-contained HTML5 canvas scenes in three worlds. No build step, no depen
 | `bone-dragon.html` | Heavenly mountains: karst peaks with pagodas, floating temple islands, celestial gate, sea of clouds, aurora | Bone dragons that grow celestial skins and beards (original) |
 | `celestial-dragon.html` | Heavenly mountains (same scene) | Celestial Eastern dragons that materialize from starlight, wear royal mantles that lengthen with age and chase glowing pearls |
 | `dragon-realistic.html` | Heavenly mountains (same scene) | Realistic, richly scaled dragons with painted heads; the mantle can be toggled on or off |
-| `dragon-world.html` | A wide side-view valley: Great Peak, Ashmaw Volcano, twin spires, old mesa, a bridge, watchtower and ruined citadel | Drakes, fire drakes, wyverns and sky serpents with nests, eggs, hatchlings and a full life cycle (not a cursor swarm: drag to explore, scroll to zoom, click a dragon or nest) |
+| `dragon-world.html` | A wide side-view realm that grows more heavenly from left to right: Ashen Wilds, Ember Highlands, Gilded Spires, Celestial Terraces and Mount Olympus | Five castes (Common, Middle, High, Emperor and the one Dragon King), 28 elements with their own breath, nests, eggs, hatchlings and a full life cycle (drag to explore, scroll to zoom, click a dragon or nest) |
 | `mushroom-swarm.html` | Enchanted toxic forest: giant mushrooms, twisted trees, witch's hut, fog, fireflies | Poisonous mushroom creatures that ripen into toxic colors |
 | `celestial-maidens.html` | Hillside village and old town: castle, church, windmill, clock tower, street lamps | Winged celestial maidens in flowing gowns |
 
