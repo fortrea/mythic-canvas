@@ -21,11 +21,13 @@ Three self-contained HTML5 canvas scenes. No build step, no dependencies: open a
 
 ## Run locally
 
-Open `index.html` in a browser, or serve the folder:
+Open `index.html` in a browser, or serve the folder with Node.js (no install needed):
 
 ```bash
-python3 -m http.server 8000
+npx serve .
 ```
+
+Then open the address it prints (usually http://localhost:3000).
 
 ## Publish with GitHub Pages
 
