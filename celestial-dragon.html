@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Celestial Dragons</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: full-bleed canvas crypt, one quiet caption bottom-left */
+:root{
+  --bg:#0d0c10; --bone:#e8dcc4; --muted:#7a7085;
+  --display:"Cinzel", "Trajan Pro", Georgia, serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--bone);overflow:hidden;cursor:crosshair;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.cap{position:fixed;left:0;bottom:0;pointer-events:none;
+  padding:0 max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));
+  display:flex;flex-direction:column;gap:4px}
+.cap h1{margin:0;font:700 clamp(18px,3vw,26px)/1 var(--display);letter-spacing:.18em;text-transform:uppercase;color:var(--bone)}
+.cap h1,.cap p{text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 12px rgba(0,0,0,.5)}
+.cap p{margin:0;font:400 11px/1.4 var(--mono);letter-spacing:.08em;color:#c9cbd8;text-transform:uppercase}
+</style>
+<style>*{box-sizing:border-box}body{margin:0}</style>
+</head>
+<body>
+
+<canvas id="c" aria-label="A swarm of celestial dragons in royal mantles that follow your cursor"></canvas>
+<div class="cap">
+  <h1>Celestial Swarm</h1>
+  <p>Move your cursor · tap to make them strike</p>
+  <p id="count">3 dragons</p>
+  <p id="form" hidden></p>
+  <p id="clock"></p>
+</div>
+
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let W,H,DPR;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener('resize',resize);resize();
+
+const cursor={x:W/2,y:H/2}; let lastMove=-1e9, strike=0;
+function setT(x,y){cursor.x=x;cursor.y=y;lastMove=performance.now()}
+addEventListener('pointermove',e=>setT(e.clientX,e.clientY));
+addEventListener('pointerdown',e=>{setT(e.clientX,e.clientY);strike=1;for(const d of drags)d.lunge=.7+Math.random()*.5});
+
+// eye colours: [core, glow rgb]
+const EYES=[
+  ['#fff1c2','255,122,60'],   // ember
+  ['#e6fbff','40,220,255'],   // spectral cyan
+  ['#f6e6ff','190,90,255'],   // void violet
+  ['#f0ffd8','120,255,90'],   // toxic green
+  ['#ffe0e0','255,40,70'],    // blood red
+  ['#fff9d6','255,210,40'],   // gold
+  ['#e4ecff','110,140,255'],  // ice blue
+  ['#ffe4f6','255,80,190'],   // hex pink
+];
+const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+const rgb=c=>`rgb(${c[0]},${c[1]},${c[2]})`;
+const BG=[7,8,15], BONE=[232,220,196], SHADE=[168,151,122], DARK=[92,82,70];
+
+// Celestial skins: a = skin at head, b = skin at tail, m = mane / whiskers / horns, g = aura glow, p = pattern
+const SKINS=[
+  {a:[60,120,215], b:[175,215,255],m:[255,240,200],g:'120,180,255',p:'scales'}, // azure sky
+  {a:[28,32,90],   b:[70,55,150],  m:[200,215,255],g:'140,150,255',p:'stars'},  // starlit night
+  {a:[225,160,35], b:[255,228,140],m:[255,120,50], g:'255,190,80', p:'scales'}, // solar gold
+  {a:[205,212,232],b:[250,250,255],m:[165,200,255],g:'200,220,255',p:'pearl'},  // moon pearl
+  {a:[140,55,175], b:[250,120,185],m:[120,225,255],g:'230,110,220',p:'stars'},  // nebula
+  {a:[35,150,115], b:[165,235,195],m:[250,228,150],g:'120,240,190',p:'scales'}, // jade heaven
+  {a:[195,40,50],  b:[255,150,80], m:[255,220,90], g:'255,120,70', p:'scales'}, // vermilion phoenix
+  {a:[35,195,175], b:[135,90,235], m:[205,255,240],g:'120,240,220',p:'stars'},  // aurora
+];
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+// royal mantle colors: midnight indigo, imperial purple, crimson, deep teal, ivory, sun gold
+const MANTLES=[[34,36,104],[86,28,118],[132,20,40],[16,78,98],[232,226,210],[196,146,40]];
+
+// Life cycle: k = current size, maxK = adult size. Adults lay hatchlings at random intervals.
+const K_MIN=.22, GROW=.04;                          // hatchling size, size gained per second
+const cap=()=>W<600?12:W<1100?18:24;                // population limit so the page stays smooth
+const breedDelay=()=>2000+Math.random()*4000;       // 2-6 s between hatchlings
+
+function paint(d){                                  // small dragons sink into the dark
+  const fade=Math.max(0,Math.min(1,(1.2-d.k)/.95))*.5;d.paintedK=d.k;
+  d.bone=rgb(mix(BONE,BG,fade));d.shade=rgb(mix(SHADE,BG,fade));d.dark=rgb(mix(DARK,BG,fade));
+  const S=d.sk;
+  d.skinCols=Array.from({length:d.N},(_,i)=>rgb(mix(mix(S.a,S.b,i/(d.N-1)),BG,fade)));
+  d.belly=rgb(mix(mix(S.b,[255,255,255],.4),BG,fade));
+  d.mane=rgb(mix(S.m,BG,fade));
+  d.beardCol=rgb(mix(mix(S.m,[255,255,255],.65),BG,fade));
+  d.ether=rgb(mix([186,204,255],BG,fade*.6));d.etherHi=rgb(mix([235,242,255],BG,fade*.6));
+  d.shadowCol=rgb(mix(mix(S.a,[0,0,0],.5),BG,fade));d.gold=rgb(mix([255,212,118],BG,fade));d.antler=rgb(mix([240,226,196],BG,fade));
+  d.mantleCol=rgb(mix(d.mant,BG,fade));d.mantleHi=rgb(mix(mix(d.mant,[255,255,255],.35),BG,fade));
+}
+// skin grows from the head toward the tail
+const sv=(d,i)=>Math.max(0,Math.min(1,d.skin*1.6-(i/d.N)*.6));
+let nextId=0;
+function makeDragon({x,y,k,maxK,eye,now,angle,sk}){
+  const N=Math.round(30+Math.random()*16);
+  const d={id:nextId++,slot:0,k,maxK,N,gap:13*k,eye,mant:pick(MANTLES),sk:sk||pick(SKINS),skin:0,
+    skinStart:now+1500+Math.random()*4000,skinDur:12000+Math.random()*14000,
+    speed:.08+Math.random()*.07,
+    orbitR:40+Math.random()*220,orbitW:(.3+Math.random()*.6)*(Math.random()<.5?-1:1),phase:Math.random()*7,
+    lunge:0,blink:0,born:now,asc:0,lifespan:45000+Math.random()*45000,nextBreed:now+breedDelay(),seg:[],feet:[],ribs:Math.random()<.85};
+  const a=angle??Math.random()*7;
+  for(let i=0;i<N;i++)d.seg.push({x:x-Math.cos(a)*i*d.gap,y:y-Math.sin(a)*i*d.gap,a});
+  d.legs=[Math.round(N*.16),Math.round(N*.46)];
+  d.feet=d.legs.flatMap(i=>[-1,1].map(s=>({i,s,x,y,px:0,py:0,tx:0,ty:0,t:1})));
+  paint(d);return d;
+}
+let drags=[];
+const t0=performance.now();
+[[.2,.3],[.8,.35],[.5,.8]].forEach(([fx,fy],j)=>{
+  const k=1.05+Math.random()*.15;
+  drags.push(makeDragon({x:W*fx,y:H*fy,k,maxK:k,eye:EYES[[0,1,2][j]],now:t0,sk:SKINS[[2,0,4][j]]}));
+});
+
+const sparks=[];
+function breed(p,now){
+  const h=p.seg[Math.round(p.N*.35)];
+  const eye=Math.random()<.5?p.eye:EYES[Math.floor(Math.random()*EYES.length)]; // half inherit the parent's eyes
+  const sk=Math.random()<.4?p.sk:undefined;                                   // some inherit the parent's skin
+  const baby=makeDragon({x:h.x,y:h.y,k:K_MIN,maxK:.45+Math.random()*.8,eye,now,sk});
+  drags.push(baby);
+  for(let i=0;i<18;i++){const a=Math.random()*7,v=1+Math.random()*3;sparks.push({x:h.x,y:h.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,c:eye[1]})}
+  p.nextBreed=now+breedDelay();
+}
+// Strays fly in from beyond the edge of the screen and join the swarm
+let nextStray=performance.now()+2000+Math.random()*2000;
+function stray(now){
+  const side=Math.floor(Math.random()*4),m=160;
+  const x=side===0?-m:side===1?W+m:Math.random()*W;
+  const y=side===2?-m:side===3?H+m:Math.random()*H;
+  const k=.4+Math.random()*.75;
+  const angle=Math.atan2(H/2-y,W/2-x);              // body trails outward, head points in
+  drags.push(makeDragon({x,y,k,maxK:k,eye:EYES[Math.floor(Math.random()*EYES.length)],now,angle}));
+}
+// Ascension: an old, fully skinned dragon rises into the sky and becomes a star
+let A=1;                                            // fade of the dragon being drawn
+function ascend(d,now,dt){
+  if(!d.asc){
+    if(d.skin>=1&&d.k>=d.maxK&&now-d.born>d.lifespan){d.asc=.001;
+      const h=d.seg[0];for(let i=0;i<24;i++){const a=Math.random()*7,v=1+Math.random()*3;sparks.push({x:h.x,y:h.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,c:d.sk.g})}}
+    return false;
+  }
+  d.asc+=dt/7000;
+  if(!reduce&&Math.random()<.6){const s=d.seg[Math.floor(Math.random()*d.N)];sparks.push({x:s.x,y:s.y,vx:(Math.random()-.5)*.6,vy:.4+Math.random()*.8,life:1,c:d.sk.g})}
+  if(d.asc>=1||d.seg[d.N-1].y<-120){
+    const old=stars.filter(s=>s.c);if(old.length>=60)stars.splice(stars.indexOf(old[0]),1);   // keep at most 60 dragon stars
+    stars.push({x:Math.min(.98,Math.max(.02,d.seg[0].x/W)),y:.03+Math.random()*.3,r:1.4+d.k*1.2,p:Math.random()*7,c:d.sk.g,born:now});
+    return true;                                    // remove from the swarm
+  }
+  return false;
+}
+function lifecycle(now,dt){
+  drags=drags.filter(d=>!ascend(d,now,dt));
+  if(now>=nextStray){if(drags.length<cap())stray(now);nextStray=now+2500+Math.random()*3500}
+  for(const d of drags){
+    if(now>d.skinStart&&d.skin<1)d.skin=Math.min(1,(now-d.skinStart)/d.skinDur);
+    if(d.k<d.maxK){d.k=Math.min(d.maxK,d.k+GROW*dt/1000);d.gap=13*d.k;if(Math.abs(d.k-d.paintedK)>.02)paint(d)}
+  }
+  if(drags.length>=cap())return;
+  for(const d of [...drags]){
+    if(!d.asc&&d.k>=d.maxK&&now>=d.nextBreed&&drags.length<cap())breed(d,now);
+  }
+}
+
+// Where each head should be. Live dragons get a slot number (by age), then:
+//  cursor mode -> evenly spaced rings around the cursor, leaving a clear circle in the middle
+//  idle mode   -> one of 5 formations, switched at random every 9 s
+const CLEAR=90, RING_GAP=80, SPACING=85;
+const FORMS=['Celestial Vortex','Atom Orbits','Infinity Chase','Rose Bloom','Supernova Pulse'];
+let NLIVE=0, form=-1, formUntil=0;
+function ringPos(i,n,cx,cy,R0,s0,squeeze){
+  let ring=0,start=0,R=R0;
+  for(;;){const capN=Math.max(1,Math.floor(2*Math.PI*R/SPACING));if(i<start+capN){
+      const inRing=Math.min(capN,n-start),j=i-start;
+      const a=(j+(ring%2?.5:0))/inRing*Math.PI*2+s0*.12*(ring%2?-1:1);
+      const r=R*squeeze;return[cx+Math.cos(a)*r,cy+Math.sin(a)*r];}
+    start+=capN;ring++;R+=RING_GAP;}
+}
+function slotTarget(d,now,idle){
+  const s0=now/1000,i=d.slot,n=Math.max(1,NLIVE),u=n>1?i/(n-1):.5;
+  const S=Math.min(W,H),cx=W/2,cy=H/2;
+  if(!idle){
+    const [tx,ty]=ringPos(i,n,cursor.x,cursor.y,CLEAR,s0,1-d.lunge*.45);
+    return {tx,ty,lx:cursor.x,ly:cursor.y};
+  }
+  // dynamic formations: every dragon races along a moving path and faces where it is flying
+  const p0=flight(form,i,n,s0,S,cx,cy),p1=flight(form,i,n,s0+.12,S,cx,cy);
+  const vx=p1[0]-p0[0],vy=p1[1]-p0[1],vl=Math.hypot(vx,vy)||1;
+  return{tx:p0[0],ty:p0[1],lx:p0[0]+vx/vl*200,ly:p0[1]+vy/vl*200};
+}
+function flight(f,i,n,t,S,cx,cy){
+  const q=i/n,TAU=Math.PI*2;
+  switch(f){
+    case 0:{ // Celestial Vortex: a whirlpool whose arms breathe in and out
+      const a=q*TAU+t*1.6,r=S*(.08+.38*(.5+.5*Math.sin(t*.8+q*TAU*2)));
+      return[cx+Math.cos(a)*r*W/S*.75,cy+Math.sin(a)*r]}
+    case 1:{ // Atom Orbits: three tilted ellipses, dragons racing around each
+      const orb=i%3,m=Math.ceil(n/3),j=Math.floor(i/3),dir=orb===1?-1:1;
+      const th=t*1.5*dir+j/m*TAU,rot=orb*TAU/3+t*.12;
+      const x=Math.cos(th)*S*.46,y=Math.sin(th)*S*.15;
+      return[cx+x*Math.cos(rot)-y*Math.sin(rot),cy+x*Math.sin(rot)+y*Math.cos(rot)]}
+    case 2:{ // Infinity Chase: one long chain chasing itself around a figure eight
+      const th=t*1.1+q*TAU,d=1+Math.sin(th)**2,A=Math.min(W*.44,S*.8);
+      return[cx+A*Math.cos(th)/d,cy+A*Math.sin(th)*Math.cos(th)/d*1.3]}
+    case 3:{ // Rose Bloom: dragons trace the petals of a spinning 5-petal flower
+      const th=t*.7+q*Math.PI,r=S*.44*Math.cos(5*th),rot=t*.25;
+      return[cx+Math.cos(th+rot)*r,cy+Math.sin(th+rot)*r]}
+    default:{ // Supernova Pulse: two waves burst outward and implode in turn, twisting as they go
+      const pulse=.5+.5*Math.sin(t*1.3+(i%2)*Math.PI),r=S*(.06+.42*pulse),a=q*TAU+t*.35+pulse*1.6;
+      return[cx+Math.cos(a)*r*W/S*.7,cy+Math.sin(a)*r]}
+  }
+}
+const formEl=document.getElementById('form');
+function plan(now){
+  const live=drags.filter(d=>!d.asc).sort((a,b)=>a.id-b.id);
+  live.forEach((d,i)=>d.slot=i);NLIVE=live.length;
+  const idle=now-lastMove>2500;
+  if(idle&&now>=formUntil){let f;do f=Math.floor(Math.random()*FORMS.length);while(f===form&&FORMS.length>1);
+    form=f;formUntil=now+9000;formEl.textContent='Formation · '+FORMS[f];}
+  if(!idle)formUntil=0;
+  formEl.hidden=!idle;
+  return idle;
+}
+
+const size=(d,i)=>{const t=i/(d.N-1);return d.k*Math.max(.18,1-t*t*.9-t*.1)};
+
+function update(d,now,dt,idle){
+  const h=d.seg[0];let tx,ty,lx,ly;
+  if(d.asc){lx=h.x+Math.sin(now/600+d.phase)*40;ly=-2000;tx=lx;ty=ly}   // gaze and fly straight up
+  else ({tx,ty,lx,ly}=slotTarget(d,now,idle));
+  let dx=tx-h.x,dy=ty-h.y;
+  if(!d.asc){
+    // keep heads apart
+    for(const o of drags){if(o===d||o.asc)continue;const ox=h.x-o.seg[0].x,oy=h.y-o.seg[0].y,od=Math.hypot(ox,oy),m=34*(d.k+o.k);
+      if(od>0&&od<m){dx+=ox/od*(m-od);dy+=oy/od*(m-od)}}
+    // keep the space around the cursor empty
+    if(!idle){const ox=h.x-cursor.x,oy=h.y-cursor.y,od=Math.hypot(ox,oy),c=CLEAR*(1-d.lunge*.45)*.85;
+      if(od>0&&od<c){dx+=ox/od*(c-od)*3;dy+=oy/od*(c-od)*3}}
+  }
+  const dist=Math.hypot(dx,dy);
+  if(dist>1){
+    // head glides to its spot around the cursor
+    const step=d.asc?(2+d.asc*14)*Math.sqrt(d.k):idle?Math.min(dist*.35,28*Math.sqrt(d.k)):Math.min(dist*(d.speed+d.lunge*.25),(18+d.lunge*30)*Math.sqrt(d.k));
+    h.x+=dx/dist*step;h.y+=dy/dist*step;
+  }
+  // skull always turns to face the cursor
+  let diff=Math.atan2(ly-h.y,lx-h.x)-h.a;diff=Math.atan2(Math.sin(diff),Math.cos(diff));
+  h.a+=diff*Math.min(1,(reduce?.15:idle?.35:.25)+d.lunge*.4);
+  d.lunge*=.92;
+  // rigid neck: first vertebra sits straight behind the skull
+  const n1=d.seg[1];n1.a=h.a;n1.x=h.x-Math.cos(h.a)*d.gap;n1.y=h.y-Math.sin(h.a)*d.gap;
+  for(let i=2;i<d.N;i++){
+    const p=d.seg[i-1],s=d.seg[i];const a=Math.atan2(p.y-s.y,p.x-s.x);
+    const wob=reduce?0:Math.sin(now/260-i*.35+d.phase)*.02*Math.min(1,dist/80);
+    s.a=a+wob;const g=13*(.55+.45*size(d,i)/d.k)*d.k;
+    s.x=p.x-Math.cos(s.a)*g;s.y=p.y-Math.sin(s.a)*g;
+  }
+  for(const f of d.feet){
+    const s=d.seg[f.i],reach=46*size(d,f.i);
+    const nx=-Math.sin(s.a)*f.s,ny=Math.cos(s.a)*f.s;
+    const hx=s.x+nx*reach+Math.cos(s.a)*reach*.55,hy=s.y+ny*reach+Math.sin(s.a)*reach*.55;
+    if(f.t>=1&&Math.hypot(hx-f.x,hy-f.y)>reach*.9){f.px=f.x;f.py=f.y;f.tx=hx+Math.cos(s.a)*reach*.3;f.ty=hy+Math.sin(s.a)*reach*.3;f.t=0}
+    if(f.t<1){f.t=Math.min(1,f.t+dt/110);const e=f.t*f.t*(3-2*f.t);f.x=f.px+(f.tx-f.px)*e;f.y=f.py+(f.ty-f.py)*e}
+  }
+  if(d.blink<=0&&Math.random()<.002)d.blink=1;
+  if(d.blink>0)d.blink=Math.max(0,d.blink-dt/140);
+}
+
+// ---------- drawing: realistic celestial dragons ----------
+// A newborn is an ethereal starlight spirit; it materializes into scales from head to tail (sv),
+// and with age grows long whiskers and a royal celestial mantle draped over its shoulders.
+const HEAD=1.15;                                   // head drawing scale relative to body size
+const bodyW=(d,i)=>7.6*size(d,i)*(i<4?.78+.055*i:1);
+const ageOf=(d,now)=>d.asc?1:clamp((now-d.born)/d.lifespan,0,1);
+
+function edges(d,now,from=1,widthMul=1){
+  const L=[],R=[];
+  for(let i=from;i<d.N;i++){const s=d.seg[i],w=bodyW(d,i)*widthMul,nx=-Math.sin(s.a),ny=Math.cos(s.a);
+    L.push([s.x+nx*w,s.y+ny*w]);R.push([s.x-nx*w,s.y-ny*w])}
+  return [L,R];
+}
+function smoothLine(pts,move){                     // quadratic curve through midpoints
+  if(move)ctx.moveTo(pts[0][0],pts[0][1]);else ctx.lineTo(pts[0][0],pts[0][1]);
+  for(let j=1;j<pts.length-1;j++){const mx=(pts[j][0]+pts[j+1][0])/2,my=(pts[j][1]+pts[j+1][1])/2;ctx.quadraticCurveTo(pts[j][0],pts[j][1],mx,my)}
+  const e=pts[pts.length-1];ctx.lineTo(e[0],e[1]);
+}
+function bodyPath(L,R,tip){
+  ctx.beginPath();smoothLine(L,true);ctx.lineTo(tip[0],tip[1]);smoothLine([...R].reverse(),false);ctx.closePath();
+}
+
+function drawLegs(d){
+  for(const f of d.feet){
+    const s=d.seg[f.i],sc=size(d,f.i),L=34*sc,a=sv(d,f.i);
+    const dx=f.x-s.x,dy=f.y-s.y,dd=Math.min(Math.hypot(dx,dy),L*1.98);
+    const base=Math.atan2(dy,dx),bend=Math.acos(Math.min(1,dd/(2*L)))*-f.s;
+    const kx=s.x+Math.cos(base+bend)*L,ky=s.y+Math.sin(base+bend)*L;
+    const fx=s.x+Math.cos(base)*dd,fy=s.y+Math.sin(base)*dd;
+    ctx.lineCap='round';
+    // ethereal limb, then the materialized one on top
+    for(const [col,al,wm] of [[d.ether,.55*(1-a)+.2,1],[d.skinCols[f.i],a,1],[d.shadowCol,a*.5,.45]]){
+      if(al<=0)continue;ctx.globalAlpha=A*al;ctx.strokeStyle=col;
+      ctx.lineWidth=7.5*sc*wm;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(kx,ky);ctx.stroke();
+      ctx.lineWidth=5.2*sc*wm;ctx.beginPath();ctx.moveTo(kx,ky);ctx.lineTo(fx,fy);ctx.stroke();
+    }
+    // elbow tuft
+    ctx.globalAlpha=A*(.4+.5*a);ctx.strokeStyle=d.mane;ctx.lineWidth=1.4*sc;
+    for(let t=0;t<3;t++){const ta=Math.atan2(ky-s.y,kx-s.x)+Math.PI+(t-1)*.35;ctx.beginPath();ctx.moveTo(kx,ky);ctx.lineTo(kx+Math.cos(ta)*9*sc,ky+Math.sin(ta)*9*sc);ctx.stroke()}
+    // four curved claws
+    ctx.globalAlpha=A;ctx.strokeStyle=a>.5?d.gold:d.ether;ctx.lineWidth=1.8*sc;
+    for(let c=-1.5;c<=1.5;c+=1){const ca=base+c*.42;ctx.beginPath();ctx.moveTo(fx,fy);
+      ctx.quadraticCurveTo(fx+Math.cos(ca)*8*sc,fy+Math.sin(ca)*8*sc,fx+Math.cos(ca+.55*f.s)*12*sc,fy+Math.sin(ca+.55*f.s)*12*sc);ctx.stroke()}
+  }
+  ctx.globalAlpha=A;
+}
+
+function drawBody(d,now){
+  const [L,R]=edges(d,now),e=d.seg[d.N-1],tip=[e.x-Math.cos(e.a)*6*d.k,e.y-Math.sin(e.a)*6*d.k];
+  // flowing mane along the neck and back (under the body)
+  ctx.strokeStyle=d.mane;ctx.lineCap='round';
+  for(let i=1;i<d.N*.55;i+=2){
+    const s=d.seg[i],sc=size(d,i),t=i/(d.N*.55);
+    for(const side of [-1,1]){
+      const wave=reduce?0:Math.sin(now/380-i*.5+d.phase+side);
+      const len=(18*(1-t)+6)*sc*(1+.15*wave),ang=s.a+Math.PI+side*(.55+.2*wave);
+      const bx=s.x-Math.sin(s.a)*bodyW(d,i)*side*.6,by=s.y+Math.cos(s.a)*bodyW(d,i)*side*.6;
+      ctx.globalAlpha=A*(.18+.32*sv(d,i));ctx.lineWidth=(2-1*t)*sc;
+      ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(bx+Math.cos(ang-side*.4)*len*.5,by+Math.sin(ang-side*.4)*len*.5,bx+Math.cos(ang)*len,by+Math.sin(ang)*len);ctx.stroke();
+    }
+  }
+  // tail plume
+  ctx.globalAlpha=A*(.5+.5*sv(d,d.N-1));ctx.lineWidth=2.2*d.k;
+  for(let j=-3;j<=3;j++){const w=reduce?0:Math.sin(now/300+j+d.phase)*.22,ang=e.a+Math.PI+j*.2+w,Lt=(46-Math.abs(j)*6)*d.k;
+    ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.quadraticCurveTo(e.x+Math.cos(ang-.35)*Lt*.5,e.y+Math.sin(ang-.35)*Lt*.5,e.x+Math.cos(ang)*Lt,e.y+Math.sin(ang)*Lt);ctx.stroke()}
+  // ethereal body
+  ctx.globalAlpha=A*.55;ctx.fillStyle=d.ether;bodyPath(L,R,tip);ctx.fill();
+  // materialized body, segment by segment
+  for(let j=0;j<L.length-1;j++){const i=j+1,a=sv(d,i);if(a<=0)continue;
+    ctx.globalAlpha=A*a;ctx.fillStyle=d.skinCols[i];
+    ctx.beginPath();ctx.moveTo(L[j][0],L[j][1]);ctx.lineTo(L[j+1][0],L[j+1][1]);ctx.lineTo(R[j+1][0],R[j+1][1]);ctx.lineTo(R[j][0],R[j][1]);ctx.closePath();ctx.fill()}
+  const ma=d.skin;
+  if(ma>0){
+    // rounded shading: dark flanks, bright dorsal stripe
+    ctx.globalAlpha=A*ma*.45;ctx.strokeStyle=d.shadowCol;ctx.lineWidth=3*d.k;ctx.lineJoin='round';
+    ctx.beginPath();smoothLine(L,true);ctx.stroke();ctx.beginPath();smoothLine(R,true);ctx.stroke();
+    ctx.globalAlpha=A*ma*.5;ctx.strokeStyle=d.belly;ctx.lineWidth=2.4*d.k;
+    ctx.beginPath();smoothLine(d.seg.slice(1).map(s=>[s.x,s.y]),true);ctx.stroke();
+    // overlapping scales
+    ctx.lineWidth=Math.max(.5,.8*d.k);
+    for(let i=2;i<d.N-1;i++){const a=sv(d,i);if(a<=0)continue;const s=d.seg[i],w=bodyW(d,i);
+      ctx.globalAlpha=A*a*.4;ctx.strokeStyle=d.belly;
+      for(const o of (i%2?[-.5,.5]:[-.9,0,.9])){const cx=s.x-Math.sin(s.a)*w*o*.6,cy=s.y+Math.cos(s.a)*w*o*.6;
+        ctx.beginPath();ctx.arc(cx,cy,w*.42,s.a+Math.PI-1.25,s.a+Math.PI+1.25);ctx.stroke()}}
+    // gold bands every few segments
+    ctx.strokeStyle=d.gold;ctx.lineWidth=1.3*d.k;
+    for(let i=6;i<d.N-3;i+=7){const a=sv(d,i);if(a<=0)continue;const s=d.seg[i],w=bodyW(d,i)*1.02,nx=-Math.sin(s.a),ny=Math.cos(s.a);
+      ctx.globalAlpha=A*a*.8;ctx.beginPath();ctx.moveTo(s.x+nx*w,s.y+ny*w);ctx.quadraticCurveTo(s.x-Math.cos(s.a)*w*.5,s.y-Math.sin(s.a)*w*.5,s.x-nx*w,s.y-ny*w);ctx.stroke()}
+    // dorsal fins
+    ctx.fillStyle=d.mane;
+    for(let i=3;i<d.N-2;i+=2){const a=sv(d,i);if(a<=0)continue;const s=d.seg[i],r=bodyW(d,i)*.9;
+      ctx.globalAlpha=A*a*.85;ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.a);
+      ctx.beginPath();ctx.moveTo(r*.5,0);ctx.quadraticCurveTo(-r*.6,-r*.45,-r*1.8,0);ctx.quadraticCurveTo(-r*.6,r*.45,r*.5,0);ctx.fill();ctx.restore()}
+  }
+  // starlight outline on the ethereal form
+  ctx.globalAlpha=A*(.6-.45*ma);ctx.strokeStyle=d.etherHi;ctx.lineWidth=1;bodyPath(L,R,tip);ctx.stroke();
+  ctx.globalAlpha=A;
+}
+
+function drawMantle(d,now){                        // royal celestial mantle, longer with age
+  const ma=sv(d,2);if(ma<=0)return;
+  const age=ageOf(d,now),m0=2,m1=Math.min(d.N-2,m0+Math.round(d.N*(.18+.42*age)));
+  const L=[],R=[];
+  for(let i=m0;i<=m1;i++){const s=d.seg[i],t=(i-m0)/(m1-m0||1),nx=-Math.sin(s.a),ny=Math.cos(s.a);
+    const w=bodyW(d,i)*(1.3+1.35*Math.sin(Math.min(1,t*1.15)*Math.PI*.55))+(reduce?0:Math.sin(now/260-i*.7+d.phase)*2.2*d.k*t);
+    L.push([s.x+nx*w,s.y+ny*w]);R.push([s.x-nx*w,s.y-ny*w])}
+  const e=d.seg[m1],hem=[e.x-Math.cos(e.a)*bodyW(d,m1)*1.5,e.y-Math.sin(e.a)*bodyW(d,m1)*1.5];
+  ctx.globalAlpha=A*ma*.92;ctx.fillStyle=d.mantleCol;bodyPath(L,R,hem);ctx.fill();
+  // folds
+  ctx.globalAlpha=A*ma*.35;ctx.strokeStyle=d.mantleHi;ctx.lineWidth=1.1*d.k;
+  for(const f of [-.55,0,.55]){ctx.beginPath();smoothLine(L.map((p,j)=>[p[0]+(R[j][0]-p[0])*(.5+f*.5),p[1]+(R[j][1]-p[1])*(.5+f*.5)]).slice(2),true);ctx.stroke()}
+  // gold trim and stitched constellation
+  ctx.globalAlpha=A*ma;ctx.strokeStyle=d.gold;ctx.lineWidth=1.6*d.k;
+  ctx.beginPath();smoothLine(L,true);ctx.lineTo(hem[0],hem[1]);smoothLine([...R].reverse(),false);ctx.stroke();
+  ctx.lineWidth=.7*d.k;ctx.globalAlpha=A*ma*.7;ctx.beginPath();
+  for(let j=2;j<L.length;j+=2){const p=L[j],q=R[j],o=((j*37)%7)/7,x=p[0]+(q[0]-p[0])*(.2+.6*o),y=p[1]+(q[1]-p[1])*(.2+.6*o);j===2?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+  ctx.stroke();
+  // collar clasp with a gem in the eye color
+  const s=d.seg[2];ctx.globalAlpha=A*ma;ctx.fillStyle=d.gold;ctx.beginPath();ctx.arc(s.x,s.y,3.2*d.k,0,7);ctx.fill();
+  ctx.fillStyle=`rgb(${d.eye[1]})`;ctx.beginPath();ctx.arc(s.x,s.y,1.7*d.k,0,7);ctx.fill();
+  ctx.globalAlpha=A;
+}
+
+function headPath(){
+  ctx.beginPath();ctx.moveTo(-14,0);ctx.bezierCurveTo(-14,-9,-6,-12,1,-11);ctx.quadraticCurveTo(7,-10.5,10,-8);
+  ctx.bezierCurveTo(16,-7,24,-6,30,-4.5);ctx.quadraticCurveTo(34,-3,34,0);ctx.quadraticCurveTo(34,3,30,4.5);
+  ctx.bezierCurveTo(24,6,16,7,10,8);ctx.quadraticCurveTo(7,10.5,1,11);ctx.bezierCurveTo(-6,12,-14,9,-14,0);ctx.closePath();
+}
+function drawHead(d,now){
+  const h=d.seg[0],a0=sv(d,0),age=ageOf(d,now);ctx.save();ctx.translate(h.x,h.y);ctx.rotate(h.a);ctx.scale(d.k*HEAD,d.k*HEAD);
+  const jaw=d.lunge;
+  // long whiskers (barbels), longer with age
+  ctx.strokeStyle=d.beardCol;ctx.lineCap='round';
+  for(const s of [-1,1])for(let k=0;k<1;k++){const w=reduce?0:Math.sin(now/400+d.phase+s+k)*10,L=(46+age*44)*(1-k*.3);
+    ctx.globalAlpha=A*(.65+.35*a0);ctx.lineWidth=1.7-k*.5;
+    ctx.beginPath();ctx.moveTo(26,s*(4.6+k*1.5));ctx.bezierCurveTo(30,s*(16+w*.3),-L*.3,s*(18+w),-L,s*(26+w*1.6+k*8));ctx.stroke()}
+  // chin beard for elders
+  if(age>.35){const b=(age-.35)/.65;ctx.globalAlpha=A*b*.75;
+    for(let j=-2;j<=2;j++){const w=reduce?0:Math.sin(now/520+d.phase+j*.8)*6*b,L=(26+(3-Math.abs(j))*9)*b;ctx.lineWidth=1.4-Math.abs(j)*.12;
+      ctx.beginPath();ctx.moveTo(14,j*1.6);ctx.bezierCurveTo(4,j*3+w*.3,-L*.4,j*5+w,-L,j*(7+b*4)+w*1.3);ctx.stroke()}}
+  // mane crown behind the head
+  ctx.globalAlpha=A*(.55+.45*a0);ctx.fillStyle=d.mane;
+  for(let t=-3;t<=3;t++){const w=reduce?0:Math.sin(now/420+t+d.phase)*3;ctx.beginPath();ctx.moveTo(-6,t*2.4);
+    ctx.quadraticCurveTo(-18,t*5+w,-30-(4-Math.abs(t))*3,t*6.5+w*1.5);ctx.quadraticCurveTo(-16,t*3.2,-6,t*2.4+1.6);ctx.fill()}
+  // branched antlers
+  ctx.strokeStyle=a0>.5?d.antler:d.etherHi;ctx.globalAlpha=A;
+  for(const s of [-1,1]){ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(-2,s*6);ctx.bezierCurveTo(-12,s*12,-22,s*16,-36,s*20);ctx.stroke();
+    ctx.lineWidth=1.6;for(const [x0,y0,x1,y1] of [[-14,13,-18,24],[-24,17,-27,28],[-20,15,-33,12]]){ctx.beginPath();ctx.moveTo(x0,s*y0);ctx.lineTo(x1,s*y1);ctx.stroke()}}
+  // lower jaw drops forward when roaring
+  if(jaw>.05){ctx.globalAlpha=A;ctx.fillStyle=d.shadowCol;ctx.beginPath();ctx.moveTo(8,-6);ctx.lineTo(30+jaw*6,-3-jaw*3);ctx.lineTo(30+jaw*6,3+jaw*3);ctx.lineTo(8,6);ctx.fill();
+    ctx.fillStyle='#fff8ea';for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(26,s*3.5);ctx.lineTo(29+jaw*4,s*(4+jaw*3));ctx.lineTo(24,s*4.6);ctx.fill()}}
+  // head: ethereal then materialized
+  ctx.globalAlpha=A*.6;ctx.fillStyle=d.ether;headPath();ctx.fill();
+  if(a0>0){ctx.globalAlpha=A*a0;const g=ctx.createLinearGradient(0,-11,0,11);g.addColorStop(0,d.shadowCol);g.addColorStop(.5,d.skinCols[0]);g.addColorStop(1,d.shadowCol);
+    ctx.fillStyle=g;headPath();ctx.fill();
+    ctx.fillStyle=d.belly;ctx.beginPath();ctx.ellipse(12,0,18,2.2,0,0,7);ctx.fill();
+    // brow ridges, cheek scales, nostrils
+    ctx.strokeStyle=d.shadowCol;ctx.lineWidth=1.4;
+    for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(-1,s*10);ctx.quadraticCurveTo(6,s*11.5,12,s*7.5);ctx.stroke();
+      ctx.beginPath();ctx.arc(-6,s*7,3,0,7);ctx.stroke()}
+    ctx.fillStyle='#120c10';for(const s of [-1,1]){ctx.beginPath();ctx.ellipse(30,s*2.4,1.8,1,s*.4,0,7);ctx.fill()}
+    // golden forehead ornament
+    ctx.fillStyle=d.gold;ctx.beginPath();ctx.moveTo(-6,0);ctx.lineTo(-1,-3.2);ctx.lineTo(4,0);ctx.lineTo(-1,3.2);ctx.closePath();ctx.fill();
+    ctx.fillStyle=`rgb(${d.eye[1]})`;ctx.beginPath();ctx.arc(-1,0,1.3,0,7);ctx.fill();
+  }
+  ctx.globalAlpha=A*(.7-.5*a0);ctx.strokeStyle=d.etherHi;ctx.lineWidth=.8;headPath();ctx.stroke();
+  // eye sockets (glow added in the light pass)
+  ctx.globalAlpha=A;ctx.fillStyle='#0c0810';for(const s of [-1,1]){ctx.beginPath();ctx.ellipse(6,s*8.2,3.4,1.9,s*.25,0,7);ctx.fill()}
+  ctx.restore();
+}
+
+// Light pass: nebula aura, starlight in the scales, the celestial pearl, glowing eyes
+function drawAura(d,now){
+  const g=d.sk.g;
+  for(let i=0;i<d.N;i+=3){const s=d.seg[i],r=bodyW(d,i);
+    ctx.fillStyle=`rgba(${g},${.035+.03*d.skin})`;ctx.beginPath();ctx.arc(s.x,s.y,r*3.4,0,7);ctx.fill()}
+  for(let i=3;i<d.N;i+=2){const a=sv(d,i),s=d.seg[i],tw=reduce?.7:.35+.65*Math.abs(Math.sin(now/520+i*1.9+d.phase));
+    const off=((i*37)%10/10-.5)*bodyW(d,i)*1.3;ctx.fillStyle=`rgba(255,255,255,${tw*(.25+.55*(d.sk.p==='stars'?a:a*.4))})`;
+    ctx.beginPath();ctx.arc(s.x-Math.sin(s.a)*off,s.y+Math.cos(s.a)*off,Math.max(.6,.9*d.k),0,7);ctx.fill()}
+  // the celestial pearl the dragon chases
+  const h=d.seg[0],t=now/700+d.phase,px=h.x+Math.cos(h.a)*(48+Math.sin(t)*6)*d.k-Math.sin(h.a)*Math.cos(t*1.3)*10*d.k,
+        py=h.y+Math.sin(h.a)*(48+Math.sin(t)*6)*d.k+Math.cos(h.a)*Math.cos(t*1.3)*10*d.k,R=13*d.k*(1+d.lunge*.6);
+  const pg=ctx.createRadialGradient(px,py,0,px,py,R);pg.addColorStop(0,'rgba(255,255,255,.95)');pg.addColorStop(.25,`rgba(${d.eye[1]},.55)`);pg.addColorStop(1,`rgba(${d.eye[1]},0)`);
+  ctx.fillStyle=pg;ctx.beginPath();ctx.arc(px,py,R,0,7);ctx.fill();
+}
+function drawEyes(d,now){
+  const h=d.seg[0],k=d.k*HEAD,c=Math.cos(h.a),s=Math.sin(h.a);
+  const pulse=reduce?1:.8+.2*Math.sin(now/300+d.phase*3),open=1-Math.sin(d.blink*Math.PI),glow=(1+d.lunge*.8)*pulse*open;
+  if(glow<.05)return;
+  for(const side of [-1,1]){
+    const lx=6*k,ly=side*8.2*k,x=h.x+lx*c-ly*s,y=h.y+lx*s+ly*c,R=18*k*glow;
+    const g=ctx.createRadialGradient(x,y,0,x,y,R);
+    g.addColorStop(0,`rgba(${d.eye[1]},.9)`);g.addColorStop(.3,`rgba(${d.eye[1]},.32)`);g.addColorStop(1,`rgba(${d.eye[1]},0)`);
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fill();
+    ctx.fillStyle=d.eye[0];ctx.beginPath();ctx.ellipse(x,y,2.6*k,1.1*k*open,h.a+side*.25,0,7);ctx.fill();
+    ctx.fillStyle='rgba(10,6,12,.9)';ctx.beginPath();ctx.ellipse(x,y,.5*k,1*k*open,h.a,0,7);ctx.fill();   // slit pupil
+  }
+}
+
+const stars=Array.from({length:140},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.1+.2,p:Math.random()*7}));
+const motes=Array.from({length:50},()=>({x:Math.random(),y:Math.random(),v:.2+Math.random()*.6,r:Math.random()*1.4+.3,e:EYES[Math.floor(Math.random()*EYES.length)][1]}));
+
+// ===================== Living scenery: a day–night cycle that keeps rotating =====================
+// One full day lasts DAY_SECONDS. Sky colors, light level and star visibility are interpolated between keyframes.
+const DAY_SECONDS=160, START_HOUR=16.5;
+const KEYS=[ // hour, sky top, sky at horizon, light (0 night .. 1 noon), stars
+  [0,   [6,8,26],    [22,24,58],   .12,1],
+  [4.6, [6,8,26],    [22,24,58],   .12,1],
+  [5.5, [30,34,90],  [190,110,140],.3, .55],
+  [6.4, [70,100,180],[255,170,110],.55,.1],
+  [8,   [95,155,225],[235,225,200],.85,0],
+  [12,  [60,130,230],[175,215,250],1,  0],
+  [16,  [75,140,220],[225,220,190],.92,0],
+  [17.5,[85,110,190],[255,190,120],.75,0],
+  [18.5,[60,55,130], [255,115,70], .55,.05],
+  [19.3,[28,28,78],  [160,70,110], .3, .45],
+  [20.5,[6,8,26],    [22,24,58],   .12,1],
+  [24,  [6,8,26],    [22,24,58],   .12,1]];
+const PHASES=[[0,'Night'],[5,'Dawn'],[6.4,'Sunrise'],[8,'Morning'],[11,'Midday'],[14,'Afternoon'],[17,'Golden hour'],[18.4,'Sunset'],[19.3,'Dusk'],[20.5,'Night']];
+const SKY={hour:START_HOUR,top:[0,0,0],hor:[0,0,0],light:1,stars:0,night:0};
+const SCENE={tint:null,tintAmt:0,layers:[],lights:[],clouds:[],birds:0,birdSize:1};
+const T0=performance.now();
+const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rgba=(c,a)=>`rgba(${c[0]},${c[1]},${c[2]},${a})`;
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+function skyAt(now){
+  const h=(START_HOUR+(now-T0)/1000/DAY_SECONDS*24)%24;
+  let i=0;while(KEYS[i+1][0]<=h)i++;
+  const a=KEYS[i],b=KEYS[i+1],f=(h-a[0])/(b[0]-a[0]),e=f*f*(3-2*f);
+  SKY.hour=h;SKY.top=mix(a[1],b[1],e);SKY.hor=mix(a[2],b[2],e);
+  if(SCENE.tint){SKY.top=mix(SKY.top,SCENE.tint,SCENE.tintAmt);SKY.hor=mix(SKY.hor,SCENE.tint,SCENE.tintAmt*.6)}
+  SKY.light=lerp(a[3],b[3],e);SKY.stars=lerp(a[4],b[4],e);SKY.night=clamp((.6-SKY.light)/.45,0,1);
+}
+
+// ---------- shape helpers (all return / fill Path2D) ----------
+function ridge(p,base,amp,step,r){            // mountain or hill line across the screen, closed to the bottom
+  const ph=[r()*7,r()*7,r()*7],f=x=>base-amp*(.5+.28*Math.sin(x/W*5+ph[0])+.14*Math.sin(x/W*13+ph[1])+.08*Math.sin(x/W*31+ph[2]));
+  p.moveTo(-10,H+10);for(let x=-10;x<=W+step;x+=step)p.lineTo(x,f(x));p.lineTo(W+10,H+10);p.closePath();
+  return f;
+}
+function roof(p,cx,y,w,h){                    // curved roof with upturned eaves (Asian style)
+  p.moveTo(cx-w*.62,y-h*.32);p.quadraticCurveTo(cx-w*.46,y+h*.06,cx-w*.3,y);p.lineTo(cx+w*.3,y);
+  p.quadraticCurveTo(cx+w*.46,y+h*.06,cx+w*.62,y-h*.32);p.quadraticCurveTo(cx+w*.26,y-h*.36,cx+w*.12,y-h);
+  p.lineTo(cx-w*.12,y-h);p.quadraticCurveTo(cx-w*.26,y-h*.36,cx-w*.62,y-h*.32);p.closePath();
+}
+function gable(p,x,y,w,h){p.moveTo(x-w*.08,y);p.lineTo(x+w/2,y-h);p.lineTo(x+w*1.08,y);p.closePath()}
+function mush(p,x,base,s){                    // giant mushroom silhouette
+  p.moveTo(x-s*.12,base);p.quadraticCurveTo(x-s*.2,base-s*.6,x-s*.1,base-s*1.1);p.lineTo(x+s*.1,base-s*1.1);
+  p.quadraticCurveTo(x+s*.06,base-s*.6,x+s*.14,base);p.closePath();
+  p.moveTo(x-s*.8,base-s*1.05);p.ellipse(x,base-s*1.05,s*.8,s*.55,0,Math.PI,Math.PI*2);p.closePath();
+}
+const bobY=(b,now)=>b?Math.sin(now*b.sp+b.ph)*b.amp:0;
+
+function layerColor(L){
+  const c=mix(L.night,L.day,SKY.light);
+  return mix(c,SKY.hor,L.haze*(.2+.35*(1-SKY.night)));
+}
+function drawLights(li,now){
+  for(const l of SCENE.lights){
+    if(l.layer!==li)continue;
+    const on=clamp((SKY.night-l.th)/.2,0,1);if(on<=0)continue;
+    const fl=l.flick?.8+.2*Math.sin(now*.013+l.x*.7):1,y=l.y+bobY(l.bob,now),a=on*fl;
+    if(l.glow){const g=ctx.createRadialGradient(l.x,y,0,l.x,y,l.glow);g.addColorStop(0,rgba(l.c,.38*a));g.addColorStop(1,rgba(l.c,0));
+      ctx.fillStyle=g;ctx.fillRect(l.x-l.glow,y-l.glow,l.glow*2,l.glow*2)}
+    ctx.fillStyle=rgba(l.c,a);
+    if(l.round){ctx.beginPath();ctx.arc(l.x,y,l.w,0,7);ctx.fill()}else ctx.fillRect(l.x-l.w/2,y-l.h/2,l.w,l.h);
+  }
+}
+
+// ---------- shared sky pieces ----------
+const skyStars=Array.from({length:180},()=>({x:Math.random(),y:Math.random()*.7,r:Math.random()*1.2+.2,p:Math.random()*7}));
+function buildClouds(r){
+  SCENE.clouds=Array.from({length:Math.round(5+W/220)},()=>({x:r(),y:.05+r()*.38,s:.6+r()*.9,v:(.000004+r()*.000008)*(r()<.5?1:-1),
+    puffs:Array.from({length:5+Math.floor(r()*4)},(_,j)=>[(j-3)*28+r()*14,(r()-.5)*14,26+r()*22,14+r()*10])}));
+}
+function cloudColor(){
+  const base=mix([34,38,70],[255,255,255],SKY.light),warm=1-Math.min(1,Math.abs(SKY.light-.55)*2.2);
+  return mix(base,SKY.hor,.25+.35*warm);
+}
+function drawClouds(now){
+  const c=cloudColor();
+  for(const cl of SCENE.clouds){
+    const x=((cl.x+now*cl.v)%1.4+1.4)%1.4*W-W*.2,y=cl.y*H;
+    ctx.fillStyle=rgba(c,.55+.25*SKY.light);
+    for(const [dx,dy,rx,ry] of cl.puffs){ctx.beginPath();ctx.ellipse(x+dx*cl.s,y+dy*cl.s,rx*cl.s,ry*cl.s,0,0,7);ctx.fill()}
+  }
+}
+function drawSunMoon(){
+  const S=Math.min(W,H),sp=(SKY.hour-5.7)/13.2;
+  if(sp>-.06&&sp<1.06){
+    const hi=Math.sin(clamp(sp,0,1)*Math.PI),x=W*(.1+.8*sp),y=H*(.8-.64*hi);
+    const c=mix([255,120,50],[255,246,215],Math.min(1,hi*1.6)),R=S*.4;
+    const g=ctx.createRadialGradient(x,y,0,x,y,R);g.addColorStop(0,rgba(c,.5));g.addColorStop(.12,rgba(c,.22));g.addColorStop(1,rgba(c,0));
+    ctx.fillStyle=g;ctx.fillRect(x-R,y-R,R*2,R*2);
+    ctx.fillStyle=rgb(c);ctx.beginPath();ctx.arc(x,y,S*.034,0,7);ctx.fill();
+  }
+  const mp=((SKY.hour-18.6+24)%24)/11.2;
+  if(mp<1.04){
+    const hi=Math.sin(clamp(mp,0,1)*Math.PI),x=W*(.14+.72*mp),y=H*(.76-.56*hi),r=S*.028,R=S*.22;
+    const g=ctx.createRadialGradient(x,y,0,x,y,R);g.addColorStop(0,`rgba(205,220,255,${.22*SKY.stars+.04})`);g.addColorStop(1,'rgba(205,220,255,0)');
+    ctx.fillStyle=g;ctx.fillRect(x-R,y-R,R*2,R*2);
+    ctx.fillStyle='#eef0f8';ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
+    ctx.fillStyle='rgba(150,160,190,.35)';
+    for(const [dx,dy,rr] of [[-.3,-.2,.22],[.25,.3,.16],[.1,-.45,.1],[-.1,.45,.12]]){ctx.beginPath();ctx.arc(x+dx*r,y+dy*r,rr*r,0,7);ctx.fill()}
+  }
+}
+function drawBirds(now){
+  if(!SCENE.birds)return;
+  const vis=clamp((SKY.light-.45)/.3,0,1);if(vis<=0)return;
+  ctx.strokeStyle=rgba(mix([40,40,60],SKY.top,.25),.75*vis);ctx.lineCap='round';
+  for(let i=0;i<SCENE.birds;i++){
+    const t=((now*.00002*(1+i*.13)+i*.37)%1.3)-.15,x=t*W,y=H*(.16+.05*i+.03*Math.sin(now*.0008+i)),s=(6+i%3*2)*SCENE.birdSize;
+    const fl=Math.sin(now*.012+i*2)*s*.6;
+    ctx.lineWidth=1.6*SCENE.birdSize;ctx.beginPath();ctx.moveTo(x-s,y-fl);ctx.quadraticCurveTo(x-s*.4,y-s*.3,x,y);ctx.quadraticCurveTo(x+s*.4,y-s*.3,x+s,y-fl);ctx.stroke();
+  }
+}
+const clockEl=document.getElementById('clock');let clockShown='';
+function drawScene(now,skyHook){
+  skyAt(now);
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,rgb(SKY.top));g.addColorStop(.55,rgb(mix(SKY.top,SKY.hor,.55)));g.addColorStop(.82,rgb(SKY.hor));g.addColorStop(1,rgb(SKY.hor));
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  if(SKY.stars>.01)for(const s of skyStars){const tw=reduce?.7:.35+.65*Math.abs(Math.sin(now/1400+s.p));
+    ctx.fillStyle=`rgba(230,236,255,${tw*.8*SKY.stars})`;ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r,0,7);ctx.fill()}
+  drawSunMoon();
+  if(skyHook)skyHook(now);
+  if(SCENE.sky)SCENE.sky(now);
+  drawClouds(now);drawBirds(now);
+  SCENE.layers.forEach((L,li)=>{
+    if(L.custom){L.custom(now);return}
+    const col=layerColor(L);ctx.fillStyle=rgb(col);
+    for(const p of L.parts){const by=bobY(p.bob,now);if(by){ctx.save();ctx.translate(0,by);ctx.fill(p.path);ctx.restore()}else ctx.fill(p.path)}
+    if(L.draw)L.draw(now,col);
+    drawLights(li,now);
+  });
+  if(SCENE.front)SCENE.front(now);
+  if(clockEl){const hh=Math.floor(SKY.hour),mm=Math.floor((SKY.hour%1)*6)*10;
+    let ph='Night';for(const [h0,n] of PHASES)if(SKY.hour>=h0)ph=n;
+    const txt=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')} · ${ph}`;
+    if(txt!==clockShown){clockShown=txt;clockEl.textContent=txt}}
+}
+function smoke(now,x,y,col){                  // chimney smoke puffs
+  for(let j=0;j<7;j++){const t=((now*.00035+j/7)%1),px=x+Math.sin(t*6+j)*5*t+t*18,py=y-t*70,r=3+t*12;
+    ctx.fillStyle=rgba(col,(1-t)*.22);ctx.beginPath();ctx.arc(px,py,r,0,7);ctx.fill()}
+}
+
+// ---------- Theme: heavenly mountains (karst peaks, pagodas, floating temple islands, a celestial gate, a sea of clouds) ----------
+const falls=[];let cloudSea=[];
+function buildScene(){
+  const r=rng(1103);SCENE.layers=[];SCENE.lights=[];falls.length=0;SCENE.birds=4;SCENE.birdSize=1.6;
+  buildClouds(r);
+  // far mountain range
+  const p0=new Path2D();ridge(p0,H*.62,H*.3,W/70,r);
+  SCENE.layers.push({parts:[{path:p0}],day:[150,168,205],night:[22,24,54],haze:.9});
+  // karst pillars, some crowned with pagodas
+  const p1=new Path2D(),n=Math.round(W/150)+3;
+  for(let i=0;i<n;i++){
+    const x=(i+.5)/n*W+(r()-.5)*W/n*.6,w=H*(.05+.05*r()),top=H*(.36+.26*r());
+    p1.moveTo(x-w*.55,H+5);p1.lineTo(x-w*.5,top+w*.9);p1.quadraticCurveTo(x-w*.52,top+w*.2,x-w*.2,top);
+    p1.quadraticCurveTo(x+w*.1,top-w*.12,x+w*.35,top+w*.1);p1.quadraticCurveTo(x+w*.55,top+w*.5,x+w*.48,top+w*1.2);p1.lineTo(x+w*.6,H+5);p1.closePath();
+    for(let t=0;t<3;t++){const tx=x+(r()-.5)*w*.6,ty=top+w*.05;p1.moveTo(tx,ty-w*.45);p1.lineTo(tx-w*.18,ty);p1.lineTo(tx+w*.18,ty);p1.closePath()}
+    if(r()<.5){ // pagoda
+      let y=top+w*.05,pw=w*.75;const tiers=3+Math.floor(r()*2),th=w*.32;
+      for(let k=0;k<tiers;k++){p1.rect(x-pw*.3,y-th*.55,pw*.6,th*.55);
+        SCENE.lights.push({layer:1,x,y:y-th*.28,w:Math.max(2,pw*.12),h:th*.25,c:[255,190,110],th:.05+r()*.4,glow:th*1.6,flick:1});
+        roof(p1,x,y-th*.5,pw,th*.5);y-=th*.95;pw*=.82}
+      p1.rect(x-1,y-th*.6,2,th*.6);
+    }
+  }
+  SCENE.layers.push({parts:[{path:p1}],day:[98,114,150],night:[14,16,38],haze:.5});
+  // floating islands with temples and waterfalls, bobbing gently
+  const parts=[],m=W<700?2:3;
+  for(let i=0;i<m;i++){
+    const x=W*((i+.5)/m)+(r()-.5)*W*.12,y=H*(.2+r()*.16),s=Math.min(W,H)*(.05+.03*r()),p=new Path2D(),bob={amp:5+r()*6,sp:.0006+r()*.0004,ph:r()*7};
+    p.moveTo(x-s*1.7,y);p.quadraticCurveTo(x,y-s*.3,x+s*1.7,y);
+    p.lineTo(x+s*1.2,y+s*.45);p.lineTo(x+s*.7,y+s*.6);p.lineTo(x+s*.4,y+s*1.1);p.lineTo(x+s*.1,y+s*1.6);p.lineTo(x-s*.25,y+s*1.05);p.lineTo(x-s*.8,y+s*.7);p.lineTo(x-s*1.3,y+s*.4);p.closePath();
+    p.rect(x-s*.5,y-s*.55,s,s*.45);roof(p,x,y-s*.5,s*1.4,s*.45);roof(p,x,y-s*.98,s*.8,s*.3);
+    p.moveTo(x+s*1.1,y-s*.1);p.lineTo(x+s*1.25,y-s*.75);p.lineTo(x+s*1.4,y-s*.1);p.closePath();
+    parts.push({path:p,bob});
+    for(const dx of [-.25,.25])SCENE.lights.push({layer:2,x:x+dx*s,y:y-s*.33,w:s*.16,h:s*.2,c:[255,200,120],th:.05+r()*.3,glow:s*.9,bob});
+    falls.push({x:x-s*1.4,y:y+s*.1,len:H*(.1+r()*.08),bob});
+  }
+  SCENE.layers.push({parts,day:[118,126,160],night:[18,20,44],haze:.35,draw:(now,col)=>{
+    ctx.lineCap='round';
+    for(const f of falls){const y=f.y+bobY(f.bob,now),g=ctx.createLinearGradient(0,y,0,y+f.len);
+      g.addColorStop(0,`rgba(235,245,255,${.55*SKY.light+.15})`);g.addColorStop(1,'rgba(235,245,255,0)');
+      ctx.strokeStyle=g;ctx.lineWidth=3;ctx.setLineDash([10,6]);ctx.lineDashOffset=-now*.06;
+      ctx.beginPath();ctx.moveTo(f.x,y);ctx.lineTo(f.x-2,y+f.len);ctx.stroke();ctx.setLineDash([])}
+  }});
+  // sea of clouds
+  cloudSea=[];for(let x=-120;x<W+160;x+=55)cloudSea.push([x,H*(.86+r()*.06),60+r()*60,22+r()*20]);
+  SCENE.layers.push({custom:now=>{
+    const c=mix(cloudColor(),[255,255,255],.15*SKY.light),off=now*.012;
+    for(const [x,y,rx,ry] of cloudSea){const px=((x+off)%(W+280)+(W+280))%(W+280)-140;
+      ctx.fillStyle=rgba(c,.88);ctx.beginPath();ctx.ellipse(px,y,rx,ry,0,0,7);ctx.fill()}
+    ctx.fillStyle=rgba(c,.92);ctx.fillRect(0,H*.93,W,H*.07);
+  }});
+  // near: cliff with the celestial gate and an old pine (left), small cliff with a stone lantern (right)
+  const p3=new Path2D(),S=Math.min(W,H),cw=Math.max(W*.3,S*.45);
+  p3.moveTo(-10,H+5);p3.lineTo(-10,H*.8);p3.quadraticCurveTo(cw*.5,H*.79,cw*.85,H*.83);p3.quadraticCurveTo(cw*.95,H*.88,cw,H+5);p3.closePath();
+  const gx=cw*.5,gy=H*.8,gw=S*.26,gh=S*.24;
+  for(const dx of [-.42,-.16,.16,.42])p3.rect(gx+dx*gw-S*.008,gy-gh*(Math.abs(dx)>.3?.75:1),S*.016,gh*(Math.abs(dx)>.3?.75:1));
+  p3.rect(gx-gw*.5,gy-gh*.98,gw,S*.012);p3.rect(gx-gw*.5,gy-gh*.72,gw,S*.01);
+  roof(p3,gx,gy-gh*.98,gw*.62,gh*.2);roof(p3,gx-gw*.29,gy-gh*.72,gw*.3,gh*.13);roof(p3,gx+gw*.29,gy-gh*.72,gw*.3,gh*.13);
+  for(const dx of [-.29,.29])SCENE.lights.push({layer:4,x:gx+dx*gw,y:gy-gh*.55,w:S*.009,round:1,c:[255,110,70],th:0,glow:S*.05,flick:1});
+  // pine at the far left
+  p3.moveTo(S*.03,H*.8);p3.quadraticCurveTo(S*.06,H*.6,S*.02,H*.45);p3.lineTo(S*.035,H*.45);p3.quadraticCurveTo(S*.08,H*.6,S*.05,H*.8);p3.closePath();
+  for(const [dx,dy,rx] of [[.02,.46,.09],[.07,.52,.08],[-.01,.56,.07],[.05,.4,.06]]){p3.moveTo(S*(dx+rx),H*dy);p3.ellipse(S*dx,H*dy,S*rx,S*.022,0,0,7)}
+  // right cliff + stone lantern
+  const rx0=W-Math.max(W*.18,S*.25);
+  p3.moveTo(W+10,H+5);p3.lineTo(W+10,H*.84);p3.quadraticCurveTo(rx0+S*.05,H*.82,rx0,H*.9);p3.lineTo(rx0-10,H+5);p3.closePath();
+  const lx=W-S*.11,ly=H*.835;p3.rect(lx-S*.008,ly-S*.06,S*.016,S*.06);p3.rect(lx-S*.022,ly-S*.085,S*.044,S*.026);roof(p3,lx,ly-S*.085,S*.06,S*.025);
+  SCENE.lights.push({layer:4,x:lx,y:ly-S*.072,w:S*.012,h:S*.012,c:[255,200,120],th:.02,glow:S*.05,flick:1});
+  SCENE.layers.push({parts:[{path:p3}],day:[54,50,70],night:[8,8,20],haze:.06});
+  // aurora ribbons at night
+  SCENE.sky=now=>{
+    if(SKY.stars<.05)return;
+    ctx.globalCompositeOperation='lighter';
+    [[90,255,190],[90,200,255],[190,110,255]].forEach((c,i)=>{
+      ctx.strokeStyle=rgba(c,.07*SKY.stars);ctx.lineWidth=H*.07;ctx.beginPath();
+      for(let x=-20;x<=W+20;x+=20){const y=H*(.14+.06*i)+Math.sin(x/W*4+now*.00025+i*1.7)*H*.05;x<0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+      ctx.stroke()});
+    ctx.globalCompositeOperation='source-over';
+  };
+}
+buildScene();addEventListener('resize',buildScene);
+
+function drawBg(now){
+  drawScene(now,()=>{ // stars left behind by those who ascended stay in the sky
+    const v=.35+.65*SKY.stars;
+    for(const s of stars){if(!s.c)continue;const tw=reduce?.6:.35+.65*Math.abs(Math.sin(now/1400+s.p));
+      const g=Math.min(1,(now-s.born)/1500),R=s.r*5*g;
+      const rg=ctx.createRadialGradient(s.x*W,s.y*H,0,s.x*W,s.y*H,R);rg.addColorStop(0,`rgba(${s.c},${.55*tw*v})`);rg.addColorStop(1,`rgba(${s.c},0)`);
+      ctx.fillStyle=rg;ctx.beginPath();ctx.arc(s.x*W,s.y*H,R,0,7);ctx.fill();
+      ctx.fillStyle=`rgba(255,255,255,${(.6+.4*tw)*v})`;ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r*g,0,7);ctx.fill()}
+  });
+  if(reduce)return;
+  const mv=.25+.75*SKY.stars;
+  for(const m of motes){m.y-=m.v*.0006;if(m.y<0){m.y=1;m.x=Math.random()}
+    ctx.fillStyle=`rgba(${m.e},${.38*mv})`;ctx.beginPath();ctx.arc(m.x*W+Math.sin(now/1500+m.v*9)*12,m.y*H,m.r,0,7);ctx.fill()}
+}
+
+const countEl=document.getElementById('count');let shown=-1;
+let prev=performance.now();
+function frame(now){
+  const dt=Math.min(50,now-prev);prev=now;
+  lifecycle(now,dt);
+  const idle=plan(now);
+  for(const d of drags)update(d,now,dt,idle);
+  if(idle&&!reduce)for(const d of drags){if(d.asc||Math.random()>.35)continue;
+    const s=d.seg[Math.floor(Math.random()*Math.min(d.N,8))];
+    sparks.push({x:s.x,y:s.y,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5,life:.8,c:Math.random()<.5?d.sk.g:d.eye[1]})}
+  drags.sort((a,b)=>a.k-b.k);                       // small ones behind, big ones in front
+  drawBg(now);
+  for(const d of drags){A=d.asc?Math.max(0,1-Math.max(0,d.asc-.35)/.65):1;ctx.globalAlpha=A;
+    drawLegs(d);drawBody(d,now);drawMantle(d,now);drawHead(d,now)}
+  A=1;ctx.globalAlpha=1;
+  ctx.globalCompositeOperation='lighter';
+  for(const d of drags){A=d.asc?Math.max(0,1-Math.max(0,d.asc-.35)/.65):1;ctx.globalAlpha=A*(1+(d.asc?Math.min(1,d.asc*3):0));drawAura(d,now);drawEyes(d,now)}
+  A=1;ctx.globalAlpha=1;
+  for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.x+=s.vx;s.y+=s.vy;s.vx*=.94;s.vy*=.94;s.life-=dt/700;
+    if(s.life<=0){sparks.splice(i,1);continue}
+    ctx.fillStyle=`rgba(${s.c},${s.life*.9})`;ctx.beginPath();ctx.arc(s.x,s.y,2.2*s.life+.4,0,7);ctx.fill()}
+  if(drags.length!==shown){shown=drags.length;countEl.textContent=`${shown} dragon${shown>1?'s':''} · limit ${cap()}`}
+  ctx.globalCompositeOperation='source-over';
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

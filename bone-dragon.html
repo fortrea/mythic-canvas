@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Celestial Dragons</title>
+<title>Bone Dragon</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IBM+Plex+Mono:wght@400&display=swap">
@@ -30,7 +30,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 </head>
 <body>
 
-<canvas id="c" aria-label="A swarm of celestial dragons in royal mantles that follow your cursor"></canvas>
+<canvas id="c" aria-label="A swarm of bone dragons that grow celestial skins and follow your cursor"></canvas>
 <div class="cap">
   <h1>Celestial Swarm</h1>
   <p>Move your cursor · tap to make them strike</p>
@@ -78,8 +78,6 @@ const SKINS=[
   {a:[35,195,175], b:[135,90,235], m:[205,255,240],g:'120,240,220',p:'stars'},  // aurora
 ];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
-// royal mantle colors: midnight indigo, imperial purple, crimson, deep teal, ivory, sun gold
-const MANTLES=[[34,36,104],[86,28,118],[132,20,40],[16,78,98],[232,226,210],[196,146,40]];
 
 // Life cycle: k = current size, maxK = adult size. Adults lay hatchlings at random intervals.
 const K_MIN=.22, GROW=.04;                          // hatchling size, size gained per second
@@ -94,16 +92,13 @@ function paint(d){                                  // small dragons sink into t
   d.belly=rgb(mix(mix(S.b,[255,255,255],.4),BG,fade));
   d.mane=rgb(mix(S.m,BG,fade));
   d.beardCol=rgb(mix(mix(S.m,[255,255,255],.65),BG,fade));
-  d.ether=rgb(mix([186,204,255],BG,fade*.6));d.etherHi=rgb(mix([235,242,255],BG,fade*.6));
-  d.shadowCol=rgb(mix(mix(S.a,[0,0,0],.5),BG,fade));d.gold=rgb(mix([255,212,118],BG,fade));d.antler=rgb(mix([240,226,196],BG,fade));
-  d.mantleCol=rgb(mix(d.mant,BG,fade));d.mantleHi=rgb(mix(mix(d.mant,[255,255,255],.35),BG,fade));
 }
 // skin grows from the head toward the tail
 const sv=(d,i)=>Math.max(0,Math.min(1,d.skin*1.6-(i/d.N)*.6));
 let nextId=0;
 function makeDragon({x,y,k,maxK,eye,now,angle,sk}){
   const N=Math.round(30+Math.random()*16);
-  const d={id:nextId++,slot:0,k,maxK,N,gap:13*k,eye,mant:pick(MANTLES),sk:sk||pick(SKINS),skin:0,
+  const d={id:nextId++,slot:0,k,maxK,N,gap:13*k,eye,sk:sk||pick(SKINS),skin:0,
     skinStart:now+1500+Math.random()*4000,skinDur:12000+Math.random()*14000,
     speed:.08+Math.random()*.07,
     orbitR:40+Math.random()*220,orbitW:(.3+Math.random()*.6)*(Math.random()<.5?-1:1),phase:Math.random()*7,
@@ -275,202 +270,215 @@ function update(d,now,dt,idle){
   if(d.blink>0)d.blink=Math.max(0,d.blink-dt/140);
 }
 
-// ---------- drawing: realistic celestial dragons ----------
-// A newborn is an ethereal starlight spirit; it materializes into scales from head to tail (sv),
-// and with age grows long whiskers and a royal celestial mantle draped over its shoulders.
-const HEAD=1.15;                                   // head drawing scale relative to body size
-const bodyW=(d,i)=>7.6*size(d,i)*(i<4?.78+.055*i:1);
-const ageOf=(d,now)=>d.asc?1:clamp((now-d.born)/d.lifespan,0,1);
-
-function edges(d,now,from=1,widthMul=1){
-  const L=[],R=[];
-  for(let i=from;i<d.N;i++){const s=d.seg[i],w=bodyW(d,i)*widthMul,nx=-Math.sin(s.a),ny=Math.cos(s.a);
-    L.push([s.x+nx*w,s.y+ny*w]);R.push([s.x-nx*w,s.y-ny*w])}
-  return [L,R];
-}
-function smoothLine(pts,move){                     // quadratic curve through midpoints
-  if(move)ctx.moveTo(pts[0][0],pts[0][1]);else ctx.lineTo(pts[0][0],pts[0][1]);
-  for(let j=1;j<pts.length-1;j++){const mx=(pts[j][0]+pts[j+1][0])/2,my=(pts[j][1]+pts[j+1][1])/2;ctx.quadraticCurveTo(pts[j][0],pts[j][1],mx,my)}
-  const e=pts[pts.length-1];ctx.lineTo(e[0],e[1]);
-}
-function bodyPath(L,R,tip){
-  ctx.beginPath();smoothLine(L,true);ctx.lineTo(tip[0],tip[1]);smoothLine([...R].reverse(),false);ctx.closePath();
+function bone(d,x1,y1,x2,y2,w){
+  ctx.lineCap='round';ctx.lineWidth=w;ctx.strokeStyle=d.bone;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  ctx.fillStyle=d.bone;
+  ctx.beginPath();ctx.arc(x1,y1,w*.85,0,7);ctx.fill();ctx.beginPath();ctx.arc(x2,y2,w*.85,0,7);ctx.fill();
 }
 
 function drawLegs(d){
   for(const f of d.feet){
-    const s=d.seg[f.i],sc=size(d,f.i),L=34*sc,a=sv(d,f.i);
+    const s=d.seg[f.i],sc=size(d,f.i),L=34*sc;
     const dx=f.x-s.x,dy=f.y-s.y,dd=Math.min(Math.hypot(dx,dy),L*1.98);
     const base=Math.atan2(dy,dx),bend=Math.acos(Math.min(1,dd/(2*L)))*-f.s;
     const kx=s.x+Math.cos(base+bend)*L,ky=s.y+Math.sin(base+bend)*L;
     const fx=s.x+Math.cos(base)*dd,fy=s.y+Math.sin(base)*dd;
-    ctx.lineCap='round';
-    // ethereal limb, then the materialized one on top
-    for(const [col,al,wm] of [[d.ether,.55*(1-a)+.2,1],[d.skinCols[f.i],a,1],[d.shadowCol,a*.5,.45]]){
-      if(al<=0)continue;ctx.globalAlpha=A*al;ctx.strokeStyle=col;
-      ctx.lineWidth=7.5*sc*wm;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(kx,ky);ctx.stroke();
-      ctx.lineWidth=5.2*sc*wm;ctx.beginPath();ctx.moveTo(kx,ky);ctx.lineTo(fx,fy);ctx.stroke();
-    }
-    // elbow tuft
-    ctx.globalAlpha=A*(.4+.5*a);ctx.strokeStyle=d.mane;ctx.lineWidth=1.4*sc;
-    for(let t=0;t<3;t++){const ta=Math.atan2(ky-s.y,kx-s.x)+Math.PI+(t-1)*.35;ctx.beginPath();ctx.moveTo(kx,ky);ctx.lineTo(kx+Math.cos(ta)*9*sc,ky+Math.sin(ta)*9*sc);ctx.stroke()}
-    // four curved claws
-    ctx.globalAlpha=A;ctx.strokeStyle=a>.5?d.gold:d.ether;ctx.lineWidth=1.8*sc;
-    for(let c=-1.5;c<=1.5;c+=1){const ca=base+c*.42;ctx.beginPath();ctx.moveTo(fx,fy);
-      ctx.quadraticCurveTo(fx+Math.cos(ca)*8*sc,fy+Math.sin(ca)*8*sc,fx+Math.cos(ca+.55*f.s)*12*sc,fy+Math.sin(ca+.55*f.s)*12*sc);ctx.stroke()}
+    bone(d,s.x,s.y,kx,ky,4.5*sc);bone(d,kx,ky,fx,fy,3.6*sc);
+    const a=sv(d,f.i);
+    if(a>0){ctx.globalAlpha=A*(a);ctx.strokeStyle=d.skinCols[f.i];ctx.lineCap='round';
+      ctx.lineWidth=8*sc;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(kx,ky);ctx.stroke();
+      ctx.lineWidth=6*sc;ctx.beginPath();ctx.moveTo(kx,ky);ctx.lineTo(fx,fy);ctx.stroke();ctx.globalAlpha=A*(1)}
+    ctx.strokeStyle=a>.5?d.mane:d.bone;ctx.lineWidth=2*sc;
+    for(let c=-1;c<=1;c++){const ca=base+c*.45;ctx.beginPath();ctx.moveTo(fx,fy);
+      ctx.quadraticCurveTo(fx+Math.cos(ca)*9*sc,fy+Math.sin(ca)*9*sc,fx+Math.cos(ca+.5*f.s)*13*sc,fy+Math.sin(ca+.5*f.s)*13*sc);ctx.stroke()}
   }
-  ctx.globalAlpha=A;
 }
 
-function drawBody(d,now){
-  const [L,R]=edges(d,now),e=d.seg[d.N-1],tip=[e.x-Math.cos(e.a)*6*d.k,e.y-Math.sin(e.a)*6*d.k];
-  // flowing mane along the neck and back (under the body)
+function drawWings(d,now){
+  const wi=Math.max(3,Math.round(d.N*.12)),s=d.seg[wi],sc=size(d,wi);
+  const flap=reduce?0:Math.sin(now/(340+d.k*120)+d.phase)*.35;
+  const back=d.seg[Math.round(d.N*.3)];
+  for(const side of [-1,1]){
+    const a=s.a+side*(Math.PI/2+.5+flap);
+    const L=70*sc,ex=s.x+Math.cos(a)*L,ey=s.y+Math.sin(a)*L;
+    const tips=[0,1,2,3].map(k=>{const fa=a+side*(-.25+k*.42),fl=(90-k*12)*sc;return[ex+Math.cos(fa)*fl,ey+Math.sin(fa)*fl]});
+    ctx.fillStyle=`rgba(${d.eye[1]},.05)`;
+    ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(ex,ey);tips.forEach(([x,y])=>ctx.lineTo(x,y));ctx.lineTo(back.x,back.y);ctx.closePath();ctx.fill();
+    bone(d,s.x,s.y,ex,ey,4*sc);
+    tips.forEach(([x,y])=>bone(d,ex,ey,x,y,2.2*sc));
+    const sa=sv(d,wi);
+    if(sa>0){ // ethereal membrane veils the wing bones as the skin grows
+      const m=d.sk.m;
+      ctx.fillStyle=`rgba(${m[0]},${m[1]},${m[2]},${sa*.38})`;
+      ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(ex,ey);tips.forEach(([x,y])=>ctx.lineTo(x,y));ctx.lineTo(back.x,back.y);ctx.closePath();ctx.fill();
+      ctx.globalAlpha=A*(sa);ctx.strokeStyle=d.mane;ctx.lineWidth=1.4*sc;
+      ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(ex,ey);tips.forEach(([x,y])=>ctx.lineTo(x,y));ctx.stroke();ctx.globalAlpha=A*(1);
+    }
+  }
+}
+
+function drawSpine(d){
+  if(d.ribs){
+    const r0=Math.round(d.N*.11),r1=Math.round(d.N*.55);
+    ctx.strokeStyle=d.shade;ctx.lineCap='round';
+    for(let i=r0;i<=r1;i+=2){
+      const s=d.seg[i],sc=size(d,i),t=(i-r0)/(r1-r0),len=(14+Math.sin(t*Math.PI)*22)*sc;
+      ctx.lineWidth=2.4*sc;ctx.globalAlpha=A*(1-sv(d,i));   // ribs disappear under the skin
+      if(ctx.globalAlpha<=0.02){ctx.globalAlpha=A*(1);continue}
+      for(const side of [-1,1]){
+        const nx=-Math.sin(s.a)*side,ny=Math.cos(s.a)*side,bx=-Math.cos(s.a),by=-Math.sin(s.a);
+        ctx.beginPath();ctx.moveTo(s.x,s.y);
+        ctx.quadraticCurveTo(s.x+nx*len,s.y+ny*len,s.x+nx*len*.7+bx*len*.7,s.y+ny*len*.7+by*len*.7);ctx.stroke();
+      }
+    }
+  }
+  ctx.globalAlpha=A*(1);
+  for(let i=d.N-1;i>0;i--){
+    const s=d.seg[i],r=6.5*size(d,i);
+    ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.a);
+    ctx.fillStyle=d.shade;
+    ctx.beginPath();ctx.moveTo(-r*.6,-r*.4);ctx.lineTo(-r*1.6,-r*2.2);ctx.lineTo(r*.3,-r*.5);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(-r*.6,r*.4);ctx.lineTo(-r*1.6,r*2.2);ctx.lineTo(r*.3,r*.5);ctx.closePath();ctx.fill();
+    ctx.fillStyle=d.bone;ctx.beginPath();ctx.ellipse(0,0,r*1.05,r*.8,0,0,7);ctx.fill();
+    ctx.fillStyle=d.dark;ctx.beginPath();ctx.arc(0,0,r*.28,0,7);ctx.fill();
+    ctx.restore();
+  }
+  const e=d.seg[d.N-1],k=d.k;ctx.save();ctx.translate(e.x,e.y);ctx.rotate(e.a);
+  ctx.fillStyle=d.bone;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-10*k,-9*k);ctx.lineTo(-30*k,0);ctx.lineTo(-10*k,9*k);ctx.closePath();ctx.fill();ctx.restore();
+}
+
+function drawSkin(d,now){
+  if(d.skin<=0)return;
+  const P=d.sk.p;
+  // flowing mane wisps (drawn first so the body sits on top)
   ctx.strokeStyle=d.mane;ctx.lineCap='round';
-  for(let i=1;i<d.N*.55;i+=2){
-    const s=d.seg[i],sc=size(d,i),t=i/(d.N*.55);
-    for(const side of [-1,1]){
-      const wave=reduce?0:Math.sin(now/380-i*.5+d.phase+side);
-      const len=(18*(1-t)+6)*sc*(1+.15*wave),ang=s.a+Math.PI+side*(.55+.2*wave);
-      const bx=s.x-Math.sin(s.a)*bodyW(d,i)*side*.6,by=s.y+Math.cos(s.a)*bodyW(d,i)*side*.6;
-      ctx.globalAlpha=A*(.18+.32*sv(d,i));ctx.lineWidth=(2-1*t)*sc;
-      ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(bx+Math.cos(ang-side*.4)*len*.5,by+Math.sin(ang-side*.4)*len*.5,bx+Math.cos(ang)*len,by+Math.sin(ang)*len);ctx.stroke();
+  for(let i=1;i<d.N*.85;i+=2){
+    const a=sv(d,i);if(a<=0)continue;
+    const s=d.seg[i],sc=size(d,i),side=(i>>1)%2?1:-1;
+    const wave=reduce?0:Math.sin(now/420-i*.45+d.phase);
+    const ang=s.a+Math.PI+side*(.85+wave*.25),len=(16+wave*4)*sc;
+    const cx=s.x+Math.cos(s.a+Math.PI+side*1.4)*len*.6,cy=s.y+Math.sin(s.a+Math.PI+side*1.4)*len*.6;
+    ctx.globalAlpha=A*(a*.85);ctx.lineWidth=1.8*sc;
+    ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.quadraticCurveTo(cx,cy,s.x+Math.cos(ang)*len,s.y+Math.sin(ang)*len);ctx.stroke();
+  }
+  // tail tuft
+  const e=d.seg[d.N-1],ea=sv(d,d.N-1);
+  if(ea>0){ctx.globalAlpha=A*(ea);ctx.lineWidth=2*d.k;
+    for(let j=-2;j<=2;j++){const w=reduce?0:Math.sin(now/300+j+d.phase)*.2,ang=e.a+Math.PI+j*.28+w,L=(34-Math.abs(j)*5)*d.k;
+      ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.quadraticCurveTo(e.x+Math.cos(ang-.3)*L*.5,e.y+Math.sin(ang-.3)*L*.5,e.x+Math.cos(ang)*L,e.y+Math.sin(ang)*L);ctx.stroke()}}
+  // body tube
+  for(let i=d.N-1;i>=1;i--){
+    const a=sv(d,i);if(a<=0)continue;
+    const s=d.seg[i],r=6.5*size(d,i)*1.35;
+    ctx.globalAlpha=A*(a);ctx.fillStyle=d.skinCols[i];ctx.beginPath();ctx.arc(s.x,s.y,r,0,7);ctx.fill();
+  }
+  // dorsal ridge and pattern
+  for(let i=d.N-1;i>=1;i--){
+    const a=sv(d,i);if(a<=0)continue;
+    const s=d.seg[i],r=6.5*size(d,i)*1.35;
+    ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.a);ctx.globalAlpha=A*(a);
+    ctx.fillStyle=d.belly;ctx.beginPath();ctx.ellipse(0,0,r*.7,r*.22,0,0,7);ctx.fill();
+    if(P==='scales'&&i%2===0){
+      ctx.strokeStyle=d.belly;ctx.lineWidth=Math.max(.6,r*.12);ctx.globalAlpha=A*(a*.55);
+      for(const sd of [-1,1]){ctx.beginPath();ctx.arc(-r*.2,sd*r*.55,r*.45,-1.2,1.2);ctx.stroke()}
     }
+    if(P==='pearl'&&i%3===0){ctx.fillStyle='rgba(255,255,255,.7)';ctx.beginPath();ctx.arc(0,0,r*.28,0,7);ctx.fill()}
+    // fins replace the bone spikes
+    ctx.globalAlpha=A*(a*.9);ctx.fillStyle=d.mane;
+    if(i%2===1&&i<d.N*.9){ctx.beginPath();ctx.moveTo(r*.4,0);ctx.lineTo(-r*1.5,-r*.35);ctx.lineTo(-r*1.1,0);ctx.lineTo(-r*1.5,r*.35);ctx.closePath();ctx.fill()}
+    ctx.restore();
   }
-  // tail plume
-  ctx.globalAlpha=A*(.5+.5*sv(d,d.N-1));ctx.lineWidth=2.2*d.k;
-  for(let j=-3;j<=3;j++){const w=reduce?0:Math.sin(now/300+j+d.phase)*.22,ang=e.a+Math.PI+j*.2+w,Lt=(46-Math.abs(j)*6)*d.k;
-    ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.quadraticCurveTo(e.x+Math.cos(ang-.35)*Lt*.5,e.y+Math.sin(ang-.35)*Lt*.5,e.x+Math.cos(ang)*Lt,e.y+Math.sin(ang)*Lt);ctx.stroke()}
-  // ethereal body
-  ctx.globalAlpha=A*.55;ctx.fillStyle=d.ether;bodyPath(L,R,tip);ctx.fill();
-  // materialized body, segment by segment
-  for(let j=0;j<L.length-1;j++){const i=j+1,a=sv(d,i);if(a<=0)continue;
-    ctx.globalAlpha=A*a;ctx.fillStyle=d.skinCols[i];
-    ctx.beginPath();ctx.moveTo(L[j][0],L[j][1]);ctx.lineTo(L[j+1][0],L[j+1][1]);ctx.lineTo(R[j+1][0],R[j+1][1]);ctx.lineTo(R[j][0],R[j][1]);ctx.closePath();ctx.fill()}
-  const ma=d.skin;
-  if(ma>0){
-    // rounded shading: dark flanks, bright dorsal stripe
-    ctx.globalAlpha=A*ma*.45;ctx.strokeStyle=d.shadowCol;ctx.lineWidth=3*d.k;ctx.lineJoin='round';
-    ctx.beginPath();smoothLine(L,true);ctx.stroke();ctx.beginPath();smoothLine(R,true);ctx.stroke();
-    ctx.globalAlpha=A*ma*.5;ctx.strokeStyle=d.belly;ctx.lineWidth=2.4*d.k;
-    ctx.beginPath();smoothLine(d.seg.slice(1).map(s=>[s.x,s.y]),true);ctx.stroke();
-    // overlapping scales
-    ctx.lineWidth=Math.max(.5,.8*d.k);
-    for(let i=2;i<d.N-1;i++){const a=sv(d,i);if(a<=0)continue;const s=d.seg[i],w=bodyW(d,i);
-      ctx.globalAlpha=A*a*.4;ctx.strokeStyle=d.belly;
-      for(const o of (i%2?[-.5,.5]:[-.9,0,.9])){const cx=s.x-Math.sin(s.a)*w*o*.6,cy=s.y+Math.cos(s.a)*w*o*.6;
-        ctx.beginPath();ctx.arc(cx,cy,w*.42,s.a+Math.PI-1.25,s.a+Math.PI+1.25);ctx.stroke()}}
-    // gold bands every few segments
-    ctx.strokeStyle=d.gold;ctx.lineWidth=1.3*d.k;
-    for(let i=6;i<d.N-3;i+=7){const a=sv(d,i);if(a<=0)continue;const s=d.seg[i],w=bodyW(d,i)*1.02,nx=-Math.sin(s.a),ny=Math.cos(s.a);
-      ctx.globalAlpha=A*a*.8;ctx.beginPath();ctx.moveTo(s.x+nx*w,s.y+ny*w);ctx.quadraticCurveTo(s.x-Math.cos(s.a)*w*.5,s.y-Math.sin(s.a)*w*.5,s.x-nx*w,s.y-ny*w);ctx.stroke()}
-    // dorsal fins
+  ctx.globalAlpha=A*(1);
+}
+
+function drawSkull(d,now){
+  const h=d.seg[0];ctx.save();ctx.translate(h.x,h.y);ctx.rotate(h.a);ctx.scale(d.k,d.k);
+  const jaw=.12+d.lunge*.6+(reduce?0:Math.max(0,Math.sin(now/900+d.phase))*.08);
+  // long beard grows with age (from 35% of the lifespan, full when old)
+  const age=d.asc?1:Math.max(0,Math.min(1,((now-d.born)/d.lifespan-.35)/.65));
+  if(age>0){
+    ctx.strokeStyle=d.beardCol;ctx.lineCap='round';
+    for(let j=-3;j<=3;j++){
+      const w=reduce?0:Math.sin(now/520+d.phase+j*.8)*8*age,L=(40+(3-Math.abs(j))*12)*age;
+      ctx.lineWidth=2.2-Math.abs(j)*.3;ctx.globalAlpha=A*(.55+.45*age);
+      ctx.beginPath();ctx.moveTo(22-Math.abs(j)*2,j*1.6);
+      ctx.bezierCurveTo(10,j*4+w*.3,-L*.4,j*7+w,-L,j*(9+age*5)+w*1.4);ctx.stroke();
+    }
+    ctx.globalAlpha=A;
+  }
+  ctx.fillStyle=d.shade;
+  for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(-6,s*7);ctx.quadraticCurveTo(-24,s*26,-40,s*20);ctx.quadraticCurveTo(-22,s*14,-2,s*3);ctx.closePath();ctx.fill()}
+  ctx.save();ctx.rotate(jaw);ctx.fillStyle=d.shade;
+  ctx.beginPath();ctx.moveTo(-4,2);ctx.lineTo(30,6);ctx.lineTo(34,10);ctx.lineTo(-2,12);ctx.closePath();ctx.fill();
+  ctx.fillStyle=d.bone;for(let x=6;x<30;x+=5){ctx.beginPath();ctx.moveTo(x,6);ctx.lineTo(x+1.5,1);ctx.lineTo(x+3,6);ctx.fill()}
+  ctx.restore();
+  ctx.fillStyle=d.bone;ctx.beginPath();
+  ctx.moveTo(-12,-10);ctx.quadraticCurveTo(0,-15,14,-8);ctx.lineTo(36,-4);ctx.quadraticCurveTo(40,0,36,4);
+  ctx.lineTo(14,7);ctx.quadraticCurveTo(0,13,-12,9);ctx.quadraticCurveTo(-18,0,-12,-10);ctx.fill();
+  for(let x=14;x<34;x+=5){ctx.beginPath();ctx.moveTo(x,4);ctx.lineTo(x+1.5,9);ctx.lineTo(x+3,4);ctx.fill()}
+  ctx.fillStyle=d.dark;ctx.beginPath();ctx.ellipse(32,-1,2,1.2,0,0,7);ctx.fill();
+  const a0=sv(d,0);
+  if(a0>0){
+    ctx.globalAlpha=A*(a0);
+    // flowing whiskers from the snout
+    ctx.strokeStyle=d.mane;ctx.lineWidth=1.6;ctx.lineCap='round';
+    for(const s of [-1,1]){const w=reduce?0:Math.sin(now/380+d.phase+s)*10;
+      ctx.beginPath();ctx.moveTo(30,s*4);ctx.bezierCurveTo(24,s*(24+w),-20,s*(10-w),-62,s*(30+w));ctx.stroke()}
+    // antlers
     ctx.fillStyle=d.mane;
-    for(let i=3;i<d.N-2;i+=2){const a=sv(d,i);if(a<=0)continue;const s=d.seg[i],r=bodyW(d,i)*.9;
-      ctx.globalAlpha=A*a*.85;ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.a);
-      ctx.beginPath();ctx.moveTo(r*.5,0);ctx.quadraticCurveTo(-r*.6,-r*.45,-r*1.8,0);ctx.quadraticCurveTo(-r*.6,r*.45,r*.5,0);ctx.fill();ctx.restore()}
+    for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(-6,s*7);ctx.quadraticCurveTo(-24,s*26,-40,s*20);ctx.quadraticCurveTo(-22,s*14,-2,s*3);ctx.closePath();ctx.fill();
+      ctx.lineWidth=2;ctx.strokeStyle=d.mane;ctx.beginPath();ctx.moveTo(-22,s*16);ctx.lineTo(-26,s*28);ctx.stroke()}
+    // jaw and head skin
+    ctx.save();ctx.rotate(jaw);ctx.fillStyle=d.skinCols[0];
+    ctx.beginPath();ctx.moveTo(-4,2);ctx.lineTo(30,6);ctx.lineTo(34,10);ctx.lineTo(-2,12);ctx.closePath();ctx.fill();ctx.restore();
+    ctx.fillStyle=d.skinCols[0];ctx.beginPath();
+    ctx.moveTo(-12,-10);ctx.quadraticCurveTo(0,-15,14,-8);ctx.lineTo(36,-4);ctx.quadraticCurveTo(40,0,36,4);
+    ctx.lineTo(14,7);ctx.quadraticCurveTo(0,13,-12,9);ctx.quadraticCurveTo(-18,0,-12,-10);ctx.fill();
+    ctx.fillStyle=d.belly;ctx.beginPath();ctx.ellipse(16,0,16,2.2,0,0,7);ctx.fill();
+    // forehead jewel
+    ctx.fillStyle=d.mane;ctx.beginPath();ctx.moveTo(-4,0);ctx.lineTo(-1,-2.5);ctx.lineTo(2,0);ctx.lineTo(-1,2.5);ctx.closePath();ctx.fill();
+    ctx.globalAlpha=A*(1);
   }
-  // starlight outline on the ethereal form
-  ctx.globalAlpha=A*(.6-.45*ma);ctx.strokeStyle=d.etherHi;ctx.lineWidth=1;bodyPath(L,R,tip);ctx.stroke();
-  ctx.globalAlpha=A;
-}
-
-function drawMantle(d,now){                        // royal celestial mantle, longer with age
-  const ma=sv(d,2);if(ma<=0)return;
-  const age=ageOf(d,now),m0=2,m1=Math.min(d.N-2,m0+Math.round(d.N*(.18+.42*age)));
-  const L=[],R=[];
-  for(let i=m0;i<=m1;i++){const s=d.seg[i],t=(i-m0)/(m1-m0||1),nx=-Math.sin(s.a),ny=Math.cos(s.a);
-    const w=bodyW(d,i)*(1.3+1.35*Math.sin(Math.min(1,t*1.15)*Math.PI*.55))+(reduce?0:Math.sin(now/260-i*.7+d.phase)*2.2*d.k*t);
-    L.push([s.x+nx*w,s.y+ny*w]);R.push([s.x-nx*w,s.y-ny*w])}
-  const e=d.seg[m1],hem=[e.x-Math.cos(e.a)*bodyW(d,m1)*1.5,e.y-Math.sin(e.a)*bodyW(d,m1)*1.5];
-  ctx.globalAlpha=A*ma*.92;ctx.fillStyle=d.mantleCol;bodyPath(L,R,hem);ctx.fill();
-  // folds
-  ctx.globalAlpha=A*ma*.35;ctx.strokeStyle=d.mantleHi;ctx.lineWidth=1.1*d.k;
-  for(const f of [-.55,0,.55]){ctx.beginPath();smoothLine(L.map((p,j)=>[p[0]+(R[j][0]-p[0])*(.5+f*.5),p[1]+(R[j][1]-p[1])*(.5+f*.5)]).slice(2),true);ctx.stroke()}
-  // gold trim and stitched constellation
-  ctx.globalAlpha=A*ma;ctx.strokeStyle=d.gold;ctx.lineWidth=1.6*d.k;
-  ctx.beginPath();smoothLine(L,true);ctx.lineTo(hem[0],hem[1]);smoothLine([...R].reverse(),false);ctx.stroke();
-  ctx.lineWidth=.7*d.k;ctx.globalAlpha=A*ma*.7;ctx.beginPath();
-  for(let j=2;j<L.length;j+=2){const p=L[j],q=R[j],o=((j*37)%7)/7,x=p[0]+(q[0]-p[0])*(.2+.6*o),y=p[1]+(q[1]-p[1])*(.2+.6*o);j===2?ctx.moveTo(x,y):ctx.lineTo(x,y)}
-  ctx.stroke();
-  // collar clasp with a gem in the eye color
-  const s=d.seg[2];ctx.globalAlpha=A*ma;ctx.fillStyle=d.gold;ctx.beginPath();ctx.arc(s.x,s.y,3.2*d.k,0,7);ctx.fill();
-  ctx.fillStyle=`rgb(${d.eye[1]})`;ctx.beginPath();ctx.arc(s.x,s.y,1.7*d.k,0,7);ctx.fill();
-  ctx.globalAlpha=A;
-}
-
-function headPath(){
-  ctx.beginPath();ctx.moveTo(-14,0);ctx.bezierCurveTo(-14,-9,-6,-12,1,-11);ctx.quadraticCurveTo(7,-10.5,10,-8);
-  ctx.bezierCurveTo(16,-7,24,-6,30,-4.5);ctx.quadraticCurveTo(34,-3,34,0);ctx.quadraticCurveTo(34,3,30,4.5);
-  ctx.bezierCurveTo(24,6,16,7,10,8);ctx.quadraticCurveTo(7,10.5,1,11);ctx.bezierCurveTo(-6,12,-14,9,-14,0);ctx.closePath();
-}
-function drawHead(d,now){
-  const h=d.seg[0],a0=sv(d,0),age=ageOf(d,now);ctx.save();ctx.translate(h.x,h.y);ctx.rotate(h.a);ctx.scale(d.k*HEAD,d.k*HEAD);
-  const jaw=d.lunge;
-  // long whiskers (barbels), longer with age
-  ctx.strokeStyle=d.beardCol;ctx.lineCap='round';
-  for(const s of [-1,1])for(let k=0;k<1;k++){const w=reduce?0:Math.sin(now/400+d.phase+s+k)*10,L=(46+age*44)*(1-k*.3);
-    ctx.globalAlpha=A*(.65+.35*a0);ctx.lineWidth=1.7-k*.5;
-    ctx.beginPath();ctx.moveTo(26,s*(4.6+k*1.5));ctx.bezierCurveTo(30,s*(16+w*.3),-L*.3,s*(18+w),-L,s*(26+w*1.6+k*8));ctx.stroke()}
-  // chin beard for elders
-  if(age>.35){const b=(age-.35)/.65;ctx.globalAlpha=A*b*.75;
-    for(let j=-2;j<=2;j++){const w=reduce?0:Math.sin(now/520+d.phase+j*.8)*6*b,L=(26+(3-Math.abs(j))*9)*b;ctx.lineWidth=1.4-Math.abs(j)*.12;
-      ctx.beginPath();ctx.moveTo(14,j*1.6);ctx.bezierCurveTo(4,j*3+w*.3,-L*.4,j*5+w,-L,j*(7+b*4)+w*1.3);ctx.stroke()}}
-  // mane crown behind the head
-  ctx.globalAlpha=A*(.55+.45*a0);ctx.fillStyle=d.mane;
-  for(let t=-3;t<=3;t++){const w=reduce?0:Math.sin(now/420+t+d.phase)*3;ctx.beginPath();ctx.moveTo(-6,t*2.4);
-    ctx.quadraticCurveTo(-18,t*5+w,-30-(4-Math.abs(t))*3,t*6.5+w*1.5);ctx.quadraticCurveTo(-16,t*3.2,-6,t*2.4+1.6);ctx.fill()}
-  // branched antlers
-  ctx.strokeStyle=a0>.5?d.antler:d.etherHi;ctx.globalAlpha=A;
-  for(const s of [-1,1]){ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(-2,s*6);ctx.bezierCurveTo(-12,s*12,-22,s*16,-36,s*20);ctx.stroke();
-    ctx.lineWidth=1.6;for(const [x0,y0,x1,y1] of [[-14,13,-18,24],[-24,17,-27,28],[-20,15,-33,12]]){ctx.beginPath();ctx.moveTo(x0,s*y0);ctx.lineTo(x1,s*y1);ctx.stroke()}}
-  // lower jaw drops forward when roaring
-  if(jaw>.05){ctx.globalAlpha=A;ctx.fillStyle=d.shadowCol;ctx.beginPath();ctx.moveTo(8,-6);ctx.lineTo(30+jaw*6,-3-jaw*3);ctx.lineTo(30+jaw*6,3+jaw*3);ctx.lineTo(8,6);ctx.fill();
-    ctx.fillStyle='#fff8ea';for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(26,s*3.5);ctx.lineTo(29+jaw*4,s*(4+jaw*3));ctx.lineTo(24,s*4.6);ctx.fill()}}
-  // head: ethereal then materialized
-  ctx.globalAlpha=A*.6;ctx.fillStyle=d.ether;headPath();ctx.fill();
-  if(a0>0){ctx.globalAlpha=A*a0;const g=ctx.createLinearGradient(0,-11,0,11);g.addColorStop(0,d.shadowCol);g.addColorStop(.5,d.skinCols[0]);g.addColorStop(1,d.shadowCol);
-    ctx.fillStyle=g;headPath();ctx.fill();
-    ctx.fillStyle=d.belly;ctx.beginPath();ctx.ellipse(12,0,18,2.2,0,0,7);ctx.fill();
-    // brow ridges, cheek scales, nostrils
-    ctx.strokeStyle=d.shadowCol;ctx.lineWidth=1.4;
-    for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(-1,s*10);ctx.quadraticCurveTo(6,s*11.5,12,s*7.5);ctx.stroke();
-      ctx.beginPath();ctx.arc(-6,s*7,3,0,7);ctx.stroke()}
-    ctx.fillStyle='#120c10';for(const s of [-1,1]){ctx.beginPath();ctx.ellipse(30,s*2.4,1.8,1,s*.4,0,7);ctx.fill()}
-    // golden forehead ornament
-    ctx.fillStyle=d.gold;ctx.beginPath();ctx.moveTo(-6,0);ctx.lineTo(-1,-3.2);ctx.lineTo(4,0);ctx.lineTo(-1,3.2);ctx.closePath();ctx.fill();
-    ctx.fillStyle=`rgb(${d.eye[1]})`;ctx.beginPath();ctx.arc(-1,0,1.3,0,7);ctx.fill();
-  }
-  ctx.globalAlpha=A*(.7-.5*a0);ctx.strokeStyle=d.etherHi;ctx.lineWidth=.8;headPath();ctx.stroke();
-  // eye sockets (glow added in the light pass)
-  ctx.globalAlpha=A;ctx.fillStyle='#0c0810';for(const s of [-1,1]){ctx.beginPath();ctx.ellipse(6,s*8.2,3.4,1.9,s*.25,0,7);ctx.fill()}
+  // eye sockets
+  ctx.fillStyle='#08070a';
+  for(const s of [-1,1]){ctx.beginPath();ctx.ellipse(4,s*4.5,5,3.2,s*.3,0,7);ctx.fill()}
   ctx.restore();
 }
 
-// Light pass: nebula aura, starlight in the scales, the celestial pearl, glowing eyes
-function drawAura(d,now){
-  const g=d.sk.g;
-  for(let i=0;i<d.N;i+=3){const s=d.seg[i],r=bodyW(d,i);
-    ctx.fillStyle=`rgba(${g},${.035+.03*d.skin})`;ctx.beginPath();ctx.arc(s.x,s.y,r*3.4,0,7);ctx.fill()}
-  for(let i=3;i<d.N;i+=2){const a=sv(d,i),s=d.seg[i],tw=reduce?.7:.35+.65*Math.abs(Math.sin(now/520+i*1.9+d.phase));
-    const off=((i*37)%10/10-.5)*bodyW(d,i)*1.3;ctx.fillStyle=`rgba(255,255,255,${tw*(.25+.55*(d.sk.p==='stars'?a:a*.4))})`;
-    ctx.beginPath();ctx.arc(s.x-Math.sin(s.a)*off,s.y+Math.cos(s.a)*off,Math.max(.6,.9*d.k),0,7);ctx.fill()}
-  // the celestial pearl the dragon chases
-  const h=d.seg[0],t=now/700+d.phase,px=h.x+Math.cos(h.a)*(48+Math.sin(t)*6)*d.k-Math.sin(h.a)*Math.cos(t*1.3)*10*d.k,
-        py=h.y+Math.sin(h.a)*(48+Math.sin(t)*6)*d.k+Math.cos(h.a)*Math.cos(t*1.3)*10*d.k,R=13*d.k*(1+d.lunge*.6);
-  const pg=ctx.createRadialGradient(px,py,0,px,py,R);pg.addColorStop(0,'rgba(255,255,255,.95)');pg.addColorStop(.25,`rgba(${d.eye[1]},.55)`);pg.addColorStop(1,`rgba(${d.eye[1]},0)`);
-  ctx.fillStyle=pg;ctx.beginPath();ctx.arc(px,py,R,0,7);ctx.fill();
-}
+// Eyes go in a separate additive pass so every glow shines over all bones
 function drawEyes(d,now){
-  const h=d.seg[0],k=d.k*HEAD,c=Math.cos(h.a),s=Math.sin(h.a);
-  const pulse=reduce?1:.8+.2*Math.sin(now/300+d.phase*3),open=1-Math.sin(d.blink*Math.PI),glow=(1+d.lunge*.8)*pulse*open;
+  const h=d.seg[0],k=d.k,c=Math.cos(h.a),s=Math.sin(h.a);
+  const pulse=reduce?1:.8+.2*Math.sin(now/300+d.phase*3);
+  const open=1-Math.sin(d.blink*Math.PI);
+  const glow=(1+d.lunge*.8)*pulse*open;
   if(glow<.05)return;
   for(const side of [-1,1]){
-    const lx=6*k,ly=side*8.2*k,x=h.x+lx*c-ly*s,y=h.y+lx*s+ly*c,R=18*k*glow;
+    const lx=5*k,ly=side*4.5*k,x=h.x+lx*c-ly*s,y=h.y+lx*s+ly*c;
+    const R=22*k*glow;
     const g=ctx.createRadialGradient(x,y,0,x,y,R);
-    g.addColorStop(0,`rgba(${d.eye[1]},.9)`);g.addColorStop(.3,`rgba(${d.eye[1]},.32)`);g.addColorStop(1,`rgba(${d.eye[1]},0)`);
+    g.addColorStop(0,`rgba(${d.eye[1]},.9)`);g.addColorStop(.3,`rgba(${d.eye[1]},.35)`);g.addColorStop(1,`rgba(${d.eye[1]},0)`);
     ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fill();
-    ctx.fillStyle=d.eye[0];ctx.beginPath();ctx.ellipse(x,y,2.6*k,1.1*k*open,h.a+side*.25,0,7);ctx.fill();
-    ctx.fillStyle='rgba(10,6,12,.9)';ctx.beginPath();ctx.ellipse(x,y,.5*k,1*k*open,h.a,0,7);ctx.fill();   // slit pupil
+    ctx.fillStyle=d.eye[0];ctx.beginPath();ctx.ellipse(x,y,2.2*k,1.3*k*open,h.a+side*.3,0,7);ctx.fill();
+  }
+}
+
+// Heavenly halo and twinkling stars on skinned dragons (additive pass)
+function drawAura(d,now){
+  if(d.skin<=0)return;
+  const g=d.sk.g;
+  for(let i=0;i<d.N;i+=3){
+    const a=sv(d,i);if(a<=0)continue;const s=d.seg[i],r=6.5*size(d,i);
+    ctx.fillStyle=`rgba(${g},${.05*a})`;ctx.beginPath();ctx.arc(s.x,s.y,r*3.2,0,7);ctx.fill();
+  }
+  if(d.sk.p==='stars'){
+    for(let i=2;i<d.N;i+=2){
+      const a=sv(d,i);if(a<=0)continue;const s=d.seg[i],r=6.5*size(d,i);
+      const tw=reduce?.7:.4+.6*Math.abs(Math.sin(now/500+i*1.7+d.phase));
+      const off=((i*37)%10/10-.5)*r*1.6;
+      ctx.fillStyle=`rgba(255,255,255,${tw*a})`;
+      ctx.beginPath();ctx.arc(s.x-Math.sin(s.a)*off,s.y+Math.cos(s.a)*off,Math.max(.7,r*.16),0,7);ctx.fill();
+    }
   }
 }
 
@@ -731,10 +739,10 @@ function frame(now){
   drags.sort((a,b)=>a.k-b.k);                       // small ones behind, big ones in front
   drawBg(now);
   for(const d of drags){A=d.asc?Math.max(0,1-Math.max(0,d.asc-.35)/.65):1;ctx.globalAlpha=A;
-    drawLegs(d);drawBody(d,now);drawMantle(d,now);drawHead(d,now)}
+    drawWings(d,now);drawLegs(d);drawSpine(d);drawSkin(d,now);drawSkull(d,now)}
   A=1;ctx.globalAlpha=1;
   ctx.globalCompositeOperation='lighter';
-  for(const d of drags){A=d.asc?Math.max(0,1-Math.max(0,d.asc-.35)/.65):1;ctx.globalAlpha=A*(1+(d.asc?Math.min(1,d.asc*3):0));drawAura(d,now);drawEyes(d,now)}
+  for(const d of drags){A=d.asc?Math.max(0,1-Math.max(0,d.asc-.35)/.65):1;ctx.globalAlpha=A*(1+(d.asc?Math.min(1,d.asc*3):0));drawAura(d,now);drawAura(d,now);drawEyes(d,now)}
   A=1;ctx.globalAlpha=1;
   for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.x+=s.vx;s.y+=s.vy;s.vx*=.94;s.vy*=.94;s.life-=dt/700;
     if(s.life<=0){sparks.splice(i,1);continue}
