@@ -4,7 +4,7 @@ Three self-contained HTML5 canvas scenes. No build step, no dependencies: open a
 
 | Page | Scene | Creatures |
 |---|---|---|
-| `bone-dragon.html` | Heavenly mountains: karst peaks with pagodas, floating temple islands, celestial gate, sea of clouds, aurora | Bone dragons that grow celestial skins and beards |
+| `bone-dragon.html` | Heavenly mountains: karst peaks with pagodas, floating temple islands, celestial gate, sea of clouds, aurora | Celestial Eastern dragons that materialize from starlight, wear royal mantles that lengthen with age and chase glowing pearls |
 | `mushroom-swarm.html` | Enchanted toxic forest: giant mushrooms, twisted trees, witch's hut, fog, fireflies | Poisonous mushroom creatures that ripen into toxic colors |
 | `celestial-maidens.html` | Hillside village and old town: castle, church, windmill, clock tower, street lamps | Winged celestial maidens in flowing gowns |
 
